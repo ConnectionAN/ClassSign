@@ -42,3 +42,4 @@ end $$;
 revoke all on function public.report_snapshot(date,date) from public,anon,authenticated;
 grant execute on function public.report_snapshot(date,date) to authenticated;
 commit;
+
