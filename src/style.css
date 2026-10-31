@@ -40,3 +40,15 @@ aside[hidden]{display:none}.sidebar-hide{margin-bottom:20px;font-size:12px}.side
  .no-print,.no-print *{display:none!important}
  .invoice-print table,.invoice-print tr,.invoice-print .lesson{break-inside:avoid}
 }
+.report-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+.report-table{overflow-x:auto}.report-table table{width:100%;min-width:520px}
+.report-definition{line-height:1.7;color:#566d62;background:#f1f5f2;padding:14px;border-radius:10px}
+.reports .filters{flex-wrap:wrap}.reports .metrics{grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}
+@media print{
+ body:has(.report-print) .report-print,body:has(.report-print) .report-print *{visibility:visible!important}
+ body:has(.report-print) .report-print{position:absolute;left:0;top:0;width:100%;padding:0;margin:0;background:white;color:black}
+ body:has(.report-print) .report-table{overflow:visible}
+ body:has(.report-print) .report-table table{min-width:0;font-size:10pt}
+ body:has(.report-print) th,body:has(.report-print) td{padding:8px 4px;overflow-wrap:anywhere}
+ body:has(.report-print) tr{break-inside:avoid}
+}
