@@ -58,14 +58,15 @@ test('leave requires a per-class choice and displays the pending makeup',async({
  expect(calls.find(c=>c.action==='leave')).toMatchObject({session:cid,needsMakeup:true,reason:'學生請假'});
  await expect(page.getByText('本月已完成',{exact:true})).toHaveCount(0);
 });
-test('scheduled signature requires actual fee confirmation and invalidates signatures after edits',async({page})=>{
+test('scheduled signature hides tuition and saves the scheduled fee without a checkbox',async({page})=>{
  const calls=await setup(page);await page.getByRole('button',{name:/09:00–10:00/}).click();await page.getByRole('button',{name:'開啟師生簽到'}).click();
- await expect(page.getByLabel('上課日期')).toBeDisabled();await expect(page.getByLabel('本堂實際學費')).toHaveValue('1000');
+ await expect(page.getByLabel('上課日期')).toBeDisabled();
+ const dialog=page.getByRole('dialog');
+ await expect(dialog).not.toContainText('學費');await expect(dialog).not.toContainText('$');
+ await expect(dialog.getByRole('checkbox')).toHaveCount(0);await expect(dialog.locator('input[type="number"]')).toHaveCount(0);
  const submit=page.getByRole('button',{name:'確認雙方簽署並儲存'});await expect(submit).toBeDisabled();
- await page.getByRole('checkbox',{name:/我已確認/}).check();await ink(page,'老師簽名');await ink(page,'學生／家長簽名');await expect(submit).toBeEnabled();
- await page.getByLabel('本堂實際學費').fill('950');await expect(submit).toBeDisabled();await expect(page.getByRole('checkbox',{name:/我已確認/})).not.toBeChecked();
- await page.getByRole('checkbox',{name:/我已確認/}).check();await ink(page,'老師簽名');await ink(page,'學生／家長簽名');await submit.click();
- await expect.poll(()=>calls.find(c=>c.action==='lesson')).toMatchObject({session:cid,student:sid,actualFee:950,feeConfirmed:true,day:'2026-10-31'});
+ await ink(page,'老師簽名');await expect(submit).toBeDisabled();await ink(page,'學生／家長簽名');await expect(submit).toBeEnabled();await submit.click();
+ await expect.poll(()=>calls.find(c=>c.action==='lesson')).toMatchObject({session:cid,student:sid,actualFee:1000,feeConfirmed:true,day:'2026-10-31'});
  expect(calls.find(c=>c.action==='lesson')?.teacher).toMatch(/^data:image\/png;base64,/);
  await expect(page.getByText('本月已完成',{exact:true})).toHaveCount(0);
  await page.getByRole('button',{name:'學生資料夾',exact:false}).click();
