@@ -27,7 +27,7 @@ No production DDL, ledger writes, account changes or migration applications were
 ## Rollout
 
 1. Review and merge the PR after checks. Confirm production migration history still matches the baseline; take the normal database backup.
-2. Apply **only** `supabase/migrations/20261031151738_reports_v1_2.sql` using the project's usual Supabase migration process. Inspect pending migrations before `db push`; do not replay the initial setup or reset the database. This file creates one read-only RPC and grants EXECUTE, with no data backfill.
+2. Apply **only** `supabase/migrations/20261031153728_reports_v1_2.sql` using the project's usual Supabase migration process. Inspect pending migrations before `db push`; do not replay the initial setup or reset the database. This file creates one read-only RPC and grants EXECUTE, with no data backfill.
 3. Deploy the matching frontend using the existing Cloudflare Pages project and environment configuration. A repository merge or successful local Vite build alone is not evidence of production deployment.
 4. With an active teacher account, compare an issued bag's item sum and allocated payments against Reports; check a cross-month receipt by payment date, partial book collection, CSV and print. Verify suspended/anonymous access is denied. Use existing records for read-only checks; do not create real test payments.
 5. Record the actual Pages deployment URL/commit and Supabase migration entry before declaring rollout complete.
@@ -40,3 +40,10 @@ Rollback: restore the previous frontend. The additive read-only RPC can remain s
 - `npm run test:ui`: existing UI regression plus report tabs, period/status filters, teacher attribution, CSV formula escaping, print, invoice navigation, invalid date ranges and missing migration handling.
 - `npm run build`: TypeScript and production Vite bundle.
 - Report tests run the real migration chain and call real billing RPCs, verify cross-month cash, correction-day reversal, void history, virtual schedule deduplication, invoker security, read-only transaction execution and suspended/anonymous rejection.
+
+
+## Production rollout record
+
+The Reports v1.2 migration was applied through Supabase on 2026-10-31 and recorded by its migration tool as `20261031153728_reports_v1_2`. The repository filename is aligned to that actual recorded version; SQL contents are unchanged. Keep the production migration history untouched. Do not apply the former `20261031151738` filename as another migration.
+
+Production read-only verification passed under the authenticated role: report invoice/payment counts and payment net match their source tables. Before/after fingerprints for students, lessons, schedules and all billing/material tables were identical. The report is STABLE SECURITY INVOKER, authenticated EXECUTE only; anonymous EXECUTE is denied. Existing security advisor notices were unchanged. PR #10 merged as `652f81929eafbc17875948d40fb3566624ba1002`; see Cloudflare checks for the frontend rollout status.
