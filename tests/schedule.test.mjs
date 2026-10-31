@@ -21,7 +21,8 @@ test('incremental schedule migration: lifecycle, billing, ownership, future conf
  const existing={action:'lesson',student:sid,id:randomUUID(),day:'2020-01-01',expectedFee:1000,teacher:sign,learner:sign};
  await rpc(existing);
  await db.exec('reset role');
- for(const file of readdirSync(migrations).filter(f=>f!=='001_studio.sql'&&f.endsWith('.sql')).sort())await db.exec(readFileSync(new URL(file,migrations),'utf8'));
+ // Keep this suite on the original per-owner scheduling stage. Shared access has its own migration suite.
+ for(const file of readdirSync(migrations).filter(f=>f.endsWith('_weekly_schedule.sql')).sort())await db.exec(readFileSync(new URL(file,migrations),'utf8'));
  await as(a);
  await t.test('001 records survive incremental migration',async()=>{
   assert.equal((await rows('select count(*)::int n from public.students'))[0].n,1);
