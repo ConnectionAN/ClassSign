@@ -19,3 +19,17 @@ aside[hidden]{display:none}.sidebar-hide{margin-bottom:20px;font-size:12px}.side
 @media(max-width:760px){.sidebar-collapsed main{padding-left:12px;padding-right:12px}.sidebar-hide{margin:0}.schedule-tools button{font-size:12px;padding:10px}.schedule>.row{flex-wrap:wrap}header{gap:8px;flex-wrap:wrap}header>span{display:none}}
 
 @media(min-width:761px){body:has(.sidebar-collapsed) .account-bar{padding:6px 24px}.sidebar-collapsed header{height:48px}.sidebar-collapsed .heading{margin:16px 0}.sidebar-collapsed .heading .eyebrow{display:none}.sidebar-collapsed .heading h1{font-size:24px;margin-bottom:6px}.sidebar-collapsed .heading .muted{margin:6px 0}.sidebar-collapsed .schedule>.muted{margin:10px 0}.sidebar-collapsed .calendar.week{height:max(280px,calc(100dvh - 460px))}.sidebar-collapsed .calendar.week>section{height:100%;min-height:0;overflow-y:auto}.sidebar-collapsed .schedule-card span{font-size:12px}}
+/* Billing stays within the existing studio interface. Print one selected student only. */
+.billing-materials{margin:24px 0;padding:20px;border:1px solid #d9e2dd;border-radius:16px}
+.billing form{margin:18px 0}.billing details,.billing-materials details{margin:18px 0}
+.billing .lesson{width:100%;text-align:left}.billing td small{display:block;color:#65776e}
+.invoice-print{margin-top:24px;padding:24px;border:1px solid #d9e2dd;border-radius:16px}
+.invoice-print table{width:100%}.invoice-print td:last-child,.invoice-print th:last-child{text-align:right}
+@media print{
+ @page{size:A4;margin:16mm}
+ body *{visibility:hidden!important}
+ .invoice-print,.invoice-print *{visibility:visible!important}
+ .invoice-print{position:absolute;left:0;top:0;width:100%;margin:0;padding:0;border:0;color:#000;background:#fff;box-sizing:border-box}
+ .no-print,.no-print *{display:none!important}
+ .invoice-print table,.invoice-print tr,.invoice-print .lesson{break-inside:avoid}
+}
