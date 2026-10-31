@@ -5,3 +5,5 @@
 
 
 .login{min-height:100dvh;display:grid;place-items:center;padding:25px}.login .dialog{max-height:none}
+
+.account-bar{padding:12px 24px;background:white;border-bottom:1px solid var(--line);position:relative;z-index:1;margin-left:246px}.account{margin:0;max-width:560px}.account-bar>button{margin-top:8px}@media(max-width:1100px){.account-bar{margin-left:200px}}@media(max-width:760px){.account-bar{margin-left:0}}
