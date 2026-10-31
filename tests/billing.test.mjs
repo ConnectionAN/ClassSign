@@ -116,6 +116,31 @@ test('billing: immutable snapshots, materials, receipts, carry forward and autho
   await assert.rejects(bill({...custom,id:randomUUID()}),/只有草稿/);await assert.rejects(bill({action:'custom_remove',invoice,id:frozen.find(i=>i.kind==='custom').id}),/只有草稿/);
   assert.ok(state.audit.some(a=>a.action==='custom_add'&&a.after_data.label==='活動費'&&a.actor===admin));
  });
+ await t.test('draft tuition/material removal survives recalculation; restore, issue lock and student rename preserve identity',async()=>{
+  await rpc({action:'student',name:'名字打錯',fee:700});const student=(await rows("select id from public.students where name='名字打錯'"))[0].id;
+  await rpc({action:'slot',student,starts:'2031-11-01',ends:'2031-11-30',weekday:2,minute:1000});
+  const materialId=randomUUID();await bill({...material,id:materialId,student,name:'可移除教材',quantity:1,unit_price:350});
+  const invoice=await draft(student,'2031-11-01');let state=await list();const old=state.invoices.find(v=>v.id===invoice).total;
+  const tuition=state.items.find(i=>i.invoice===invoice&&i.kind==='tuition'),mat=state.items.find(i=>i.invoice===invoice&&i.material===materialId);
+  await bill({action:'draft_item_remove',invoice,id:tuition.id});state=await list();const materialItem=state.items.find(i=>i.invoice===invoice&&i.material===materialId);
+  await bill({action:'draft_item_remove',invoice,id:materialItem.id});await draft(student,'2031-11-01');state=await list();
+  assert.equal(state.invoices.find(v=>v.id===invoice).total,old-1050);assert.equal(state.exclusions.filter(e=>e.invoice===invoice).length,2);
+  assert.ok(!state.items.some(i=>i.invoice===invoice&&(i.source_session===tuition.source_session||i.material===materialId)));
+  for(const exclusion of state.exclusions.filter(e=>e.invoice===invoice))await bill({action:'draft_item_restore',invoice,id:exclusion.id});
+  assert.equal((await list()).invoices.find(v=>v.id===invoice).total,old);
+  const customId=randomUUID();await bill({action:'custom_add',invoice,id:customId,name:'可還原自訂費',amount:500});await bill({action:'draft_item_remove',invoice,id:customId});
+  state=await list();const customEx=state.exclusions.find(e=>e.invoice===invoice&&e.kind==='custom');await bill({action:'draft_item_restore',invoice,id:customEx.id});
+  assert.equal((await list()).invoices.find(v=>v.id===invoice).total,old+500);
+  await rpc({action:'student_rename',student,name:'姓名已更正',expectedName:'名字打錯'});
+  assert.equal((await rows('select name from public.students where id=$1',[student]))[0].name,'姓名已更正');assert.equal((await list()).invoices.find(v=>v.id===invoice).student_name,'姓名已更正');
+  await assert.rejects(rpc({action:'student_rename',student,name:'',expectedName:'姓名已更正'}),/姓名/);
+  await assert.rejects(rpc({action:'student_rename',student,name:'覆蓋別人',expectedName:'名字打錯'}),/其他使用者/);
+  await issue(invoice);state=await list();const frozen=state.items.filter(i=>i.invoice===invoice);
+  await rpc({action:'student_rename',student,name:'再次更正',expectedName:'姓名已更正'});
+  state=await list();assert.equal(state.invoices.find(v=>v.id===invoice).student_name,'姓名已更正');assert.deepEqual(state.items.filter(i=>i.invoice===invoice),frozen);
+  await assert.rejects(bill({action:'draft_item_remove',invoice,id:frozen[0].id}),/已開立/);
+  assert.ok((await rows("select * from public.schedule_events where action='student_rename' and after_data->>'student'=$1",[student])).every(e=>e.actor===admin));
+ });
  await t.test('unknown, suspended and anonymous callers cannot read or change billing',async()=>{
   await as(outsider);await assert.rejects(list(),/停用|權限/);assert.equal((await rows('select * from public.billing_invoices')).length,0);
   await db.exec('reset role');await db.query("insert into auth.identities values($1,'google')",[outsider]);await as(outsider);await db.exec("select public.account_action('{\"action\":\"bootstrap\"}')");
