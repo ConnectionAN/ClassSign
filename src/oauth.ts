@@ -34,7 +34,9 @@ export async function finishGoogle(client:SupabaseClient){
   const pending:Pending=JSON.parse(raw||'null');
   if(!pending||!code||Date.now()-pending.started>15*60*1000||pending.started>Date.now()||!Number.isFinite(pending.started))throw new Error(failure);
   const flowId=url.searchParams.get('sb_flow_id');
-  if(pending.flowId&&flowId!==pending.flowId)throw new Error(failure);
+  // The SDK returns a per-flow ID but omits it from redirects by default.
+  // Use our saved ID to select the original PKCE verifier; reject an explicit mismatch.
+  if(pending.flowId&&flowId!==null&&flowId!==pending.flowId)throw new Error(failure);
   const {data,error}=await client.auth.exchangeCodeForSession(code,pending.flowId?{flowId:pending.flowId}:undefined);
   if(error||!data.session)throw new Error(failure);
   if(pending.userId&&data.session.user.id!==pending.userId){

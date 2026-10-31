@@ -50,3 +50,15 @@ test('SDK per-flow PKCE verifier is forwarded after URL cleanup; mismatched flow
  const b=browser('https://classsign.example/?code=x&sb_flow_id=flow-1');b.memory.set('classsign.oauth',JSON.stringify({userId:null,started:Date.now(),flowId:'flow-1'}));const c=client();await finishGoogle(c);assert.deepEqual(c.calls[0],['exchange','x',{flowId:'flow-1'}]);assert.equal(b.cleaned,'/');
  const wrong=browser('https://classsign.example/?code=x&sb_flow_id=other');wrong.memory.set('classsign.oauth',JSON.stringify({userId:null,started:Date.now(),flowId:'flow-1'}));const d=client();await assert.rejects(finishGoogle(d));assert.equal(d.calls.length,0);
 });
+
+test('default SDK code-only callback uses saved PKCE flow and allows a new Google UUID',async()=>{
+ const b=browser(),c=client({id:'new-google-uuid'});
+ c.auth.signInWithOAuth=async()=>({data:{url:'https://provider.example/',flowId:'flow-1'},error:null});
+ await startGoogle(c,null);
+ window.location.href='https://classsign.example/?code=new-account-code';
+ assert.equal(await finishGoogle(c),'');
+ assert.deepEqual(c.calls,[['exchange','new-account-code',{flowId:'flow-1'}]]);
+ assert.equal(b.cleaned,'/');assert.equal(b.memory.size,0);
+ await assert.rejects(finishGoogle(c));
+ assert.equal(c.calls.length,1);
+});
