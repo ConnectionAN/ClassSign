@@ -14,10 +14,11 @@ try{
  for(const u of backup.auth_ids)await db.query('insert into auth.users(id,email,email_confirmed_at,last_sign_in_at) values($1,$2,now(),now())',[u.id,u.email]);
  // Establish schema with the same pinned admin. Restore rows after all pre-billing migrations.
  const files=readdirSync(dir).filter(f=>f.endsWith('.sql')).sort();
- const billing=files.find(f=>f.endsWith('_billing_v1_1.sql'));
+ const billing=files.at(-1);
  for(const f of files.filter(f=>f!==billing))await db.exec(readFileSync(new URL(f,dir),'utf8'));
  await db.exec('delete from studio_private.workspace_settings;delete from public.teacher_access;delete from public.app_accounts;');
- const tables=['students','fee_changes','weekly_slots','class_sessions','lessons','schedule_events','teacher_access','app_accounts'];
+ const tables=['students','fee_changes','weekly_slots','class_sessions','lessons','schedule_events','teacher_access','app_accounts',
+ 'student_material_purchases','billing_invoices','billing_adjustments','billing_items','billing_payments','billing_audit'].filter(t=>backup[t]);
  for(const table of tables){
   if(!backup[table].length)continue;
   // Public exports have known allowlisted table names; JSON records retain all columns and UUIDs.
@@ -29,7 +30,7 @@ try{
  const before=await snapshot();await db.exec(readFileSync(new URL(billing,dir),'utf8'));assert.deepEqual(await snapshot(),before);
  for(const u of backup.auth_ids){const x=(await db.query('select id from auth.users where id=$1',[u.id])).rows;assert.equal(x.length,1)}
  const owner=backup.workspace_settings[0].owner;await db.query("select set_config('request.jwt.claim.sub',$1,false)",[owner]);await db.exec('set role authenticated');
- const response=(await db.query(`select public.billing_action('{"action":"list"}') r`)).rows[0].r;assert.equal(response.invoices.length,0);
+ const response=(await db.query(`select public.billing_action('{"action":"list"}') r`)).rows[0].r;assert.equal(response.invoices.length,backup.billing_invoices?.length||0);
  const report={result:'PASS',database:'disposable PGlite/PostgreSQL',auth_uid_count:backup.auth_ids.length,preserved_rows:Object.fromEntries(tables.map(t=>[t,before[t].length])),new_invoices:response.invoices.length,note:'Logical application-data rehearsal; not a full Auth/service backup or live migration.'};
  if(process.argv[3])writeFileSync(process.argv[3],JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));
 }finally{await db.close()}
