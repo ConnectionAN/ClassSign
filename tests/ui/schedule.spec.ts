@@ -31,6 +31,8 @@ async function ink(page:Page,label:string){
 }
 test('day/week navigation and recurring form preserve 60-minute default',async({page})=>{
  const calls=await setup(page);
+ await expect(page.getByText('在學學生',{exact:true})).toHaveCount(0);
+ await expect(page.getByText('本月授課應收',{exact:true})).toHaveCount(0);
  expect(calls.at(-1)).toMatchObject({action:'calendar',from:'2026-10-26',to:'2026-11-01'});
  await page.getByRole('button',{name:'日檢視',exact:true}).click();
  await expect.poll(()=>calls.at(-1)?.from).toBe('2026-10-31');
@@ -52,7 +54,7 @@ test('leave requires a per-class choice and displays the pending makeup',async({
  await page.getByRole('button',{name:'確認儲存'}).click();
  await expect(page.getByRole('button',{name:'安排補課',exact:true})).toBeVisible();
  expect(calls.find(c=>c.action==='leave')).toMatchObject({session:cid,needsMakeup:true,reason:'學生請假'});
- await expect(page.getByText('本月已完成').locator('..')).toContainText('0');
+ await expect(page.getByText('本月已完成',{exact:true})).toHaveCount(0);
 });
 test('scheduled signature requires actual fee confirmation and invalidates signatures after edits',async({page})=>{
  const calls=await setup(page);await page.getByRole('button',{name:/09:00–10:00/}).click();await page.getByRole('button',{name:'開啟師生簽到'}).click();
@@ -63,6 +65,8 @@ test('scheduled signature requires actual fee confirmation and invalidates signa
  await page.getByRole('checkbox',{name:/我已確認/}).check();await ink(page,'老師簽名');await ink(page,'學生／家長簽名');await submit.click();
  await expect.poll(()=>calls.find(c=>c.action==='lesson')).toMatchObject({session:cid,student:sid,actualFee:950,feeConfirmed:true,day:'2026-10-31'});
  expect(calls.find(c=>c.action==='lesson')?.teacher).toMatch(/^data:image\/png;base64,/);
+ await expect(page.getByText('本月已完成',{exact:true})).toHaveCount(0);
+ await page.getByRole('button',{name:'學生資料夾',exact:false}).click();
  await expect(page.getByText('本月已完成').locator('..')).toContainText('1');
 });
 test('mobile calendar scrolls inside its container',async({page})=>{
@@ -76,5 +80,5 @@ test('arranged makeup remains visible until signed and links its original leave 
  await page.getByRole('button',{name:/09:00–10:00/}).last().click();
  await page.getByRole('button',{name:'2026-10-17 09:00 · 測試學生'}).click();
  await expect(page.getByRole('dialog')).toContainText('2026-10-17 09:00–10:00 · 請假');
- await expect(page.getByText('本月已完成').locator('..')).toContainText('0');
+ await expect(page.getByText('本月已完成',{exact:true})).toHaveCount(0);
 });
