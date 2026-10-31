@@ -106,8 +106,10 @@ test('collapsed tablet layout fits seven days and removes other page entrances',
   expect(sizes.children).toBe(7);expect(sizes.scroll).toBeLessThanOrEqual(sizes.width+1);expect(sizes.right).toBeLessThanOrEqual(sizes.viewport);expect(sizes.bottom).toBeLessThanOrEqual(sizes.viewportHeight);
  }
  await page.screenshot({path:'test-results/tablet-seven-days.png',fullPage:true});
+ await page.evaluate(()=>window.scrollTo(0,document.body.scrollHeight));
+ const toggle=await page.getByRole('button',{name:'展開功能列',exact:true}).boundingBox();expect(toggle!.x).toBe(8);expect(toggle!.y).toBe(8);
  await page.reload();await expect(page.locator('aside')).toBeHidden();
- await page.getByRole('button',{name:'☰ 展開功能列'}).click();await expect(page.getByRole('button',{name:'學生資料夾',exact:false})).toBeVisible();
+ await page.getByRole('button',{name:'展開功能列'}).click();await expect(page.getByRole('button',{name:'學生資料夾',exact:false})).toBeVisible();
 });
 test('one-off signing selects a student and time, clears signatures after edits and submits without fee fields',async({page})=>{
  const calls=await setup(page);await page.getByRole('button',{name:'＋ 單堂簽到'}).click();const dialog=page.getByRole('dialog');

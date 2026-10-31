@@ -47,3 +47,22 @@ test('student notes save multiline text and remain visible after reopening the f
  await page.getByRole('button',{name:'日／週課表'}).click();await folder(page);
  await expect(page.getByRole('textbox',{name:'學生備註',exact:true})).toHaveValue('教材：第一冊\n下週帶樂譜 <script>');
 });
+
+test('student list and selected details scroll independently on a tablet',async({page})=>{
+ await page.setViewportSize({width:1024,height:768});await setup(page);
+ await page.route('https://classsign-test.invalid/rest/v1/students**',route=>route.fulfill({contentType:'application/json',body:JSON.stringify(Array.from({length:40},(_,i)=>({id:i===0?sid:`student-${i}`,name:i===0?'測試學生':`其他學生${String(i).padStart(2,'0')}`,fee:800,active:1,notes:'',created:'2026-10-01'})))}));
+ await page.route('https://classsign-test.invalid/rest/v1/lessons**',route=>route.fulfill({contentType:'application/json',body:JSON.stringify(Array.from({length:60},(_,i)=>({id:`lesson-${i}`,student:sid,day:'2026-10-01',fee:800,voided:null,created:'2026-10-01'})))}));
+ await page.reload();await folder(page);
+ const workspace=page.locator('.workspace'),left=page.locator('.student-list'),right=page.locator('.workspace>.records');
+ await workspace.evaluate(el=>el.scrollIntoView({block:'start'}));
+ const beforeY=await page.evaluate(()=>window.scrollY),leftTop=await left.evaluate(el=>el.scrollTop);
+ const rightBox=(await right.boundingBox())!;await page.mouse.move(rightBox.x+rightBox.width/2,rightBox.y+200);await page.mouse.wheel(0,500);
+ await expect.poll(()=>right.evaluate(el=>el.scrollTop)).toBeGreaterThan(0);
+ expect(await left.evaluate(el=>el.scrollTop)).toBe(leftTop);expect(await page.evaluate(()=>window.scrollY)).toBe(beforeY);
+ const rightTop=await right.evaluate(el=>el.scrollTop),leftBox=(await left.boundingBox())!;
+ await page.mouse.move(leftBox.x+leftBox.width/2,leftBox.y+100);await page.mouse.wheel(0,-350);
+ await expect.poll(()=>left.evaluate(el=>el.scrollTop)).toBeLessThan(leftTop);
+ expect(await right.evaluate(el=>el.scrollTop)).toBe(rightTop);expect(await page.evaluate(()=>window.scrollY)).toBe(beforeY);
+ const button=await page.getByRole('button',{name:'收合功能列',exact:true}).boundingBox();expect(button!.x).toBe(8);expect(button!.y).toBe(8);
+ await page.screenshot({path:'test-results/independent-student-panes.png',fullPage:false});
+});
