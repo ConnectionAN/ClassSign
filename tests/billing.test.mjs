@@ -63,8 +63,8 @@ test('billing: immutable snapshots, materials, receipts, carry forward and autho
  });
  await t.test('credit applies next available period, caps at zero and restoration adds a compensating debit',async()=>{
   const dec=(await list()).invoices.find(v=>v.month==='2026-12-01').id;
-  await draft(sid,'2026-12-01');await issue(dec);d=await list();assert.equal(d.invoices.find(v=>v.id===dec).total,3200);
-  const jan=await draft(sid,'2027-01-01');d=await list();assert.equal(d.invoices.find(v=>v.id===jan).total,2400);await issue(jan);
+  await draft(sid,'2026-12-01');await issue(dec);d=await list();assert.equal(d.invoices.find(v=>v.id===dec).total,3600);
+  const jan=await draft(sid,'2027-01-01');d=await list();assert.equal(d.invoices.find(v=>v.id===jan).total,2800);await issue(jan);
   const makeup=(await rows("select * from public.class_sessions where original is not null"))[0];
   await rpc({action:'restore',student:sid,session:makeup.id});
   d=await list();assert.equal(d.adjustments.reduce((n,a)=>n+Number(a.amount),0),0);
@@ -95,8 +95,26 @@ test('billing: immutable snapshots, materials, receipts, carry forward and autho
   await rpc({action:'leave',student:sid,session:c.id,needsMakeup:true});
   await assert.rejects(bill({action:'confirm_no_makeup',student:sid,session:c.id,reason:''}),/原因/);
   await bill({action:'confirm_no_makeup',student:sid,session:c.id,reason:'家長確認不再補課'});
-  const after=await list();assert.ok(after.adjustments.some(a=>a.source===c.id&&Number(a.amount)===800));
+  const after=await list();assert.ok(after.adjustments.some(a=>a.source===c.id&&Number(a.amount)===900));
   assert.ok(after.audit.some(a=>a.action==='confirm_no_makeup'&&a.after_data.reason==='家長確認不再補課'));
+ });
+ await t.test('legacy zero schedule rates use student fee; custom charges survive recalculation and lock on issue',async()=>{
+  await rpc({action:'student',name:'舊課表零元回歸',fee:700});const student=(await rows("select id from public.students where name='舊課表零元回歸'"))[0].id;
+  await rpc({action:'slot',student,starts:'2030-11-01',ends:'2030-11-30',weekday:5,minute:1000});
+  await db.exec('reset role');await db.query('update public.weekly_slots set estimated_fee=0 where student=$1',[student]);await as(admin);
+  const invoice=await draft(student,'2030-11-01');let state=await list();const tuition=state.items.filter(i=>i.invoice===invoice&&i.kind==='tuition');
+  assert.ok(tuition.length>0);assert.ok(tuition.every(i=>Number(i.amount)===700&&i.snapshot.rate_source==='student_current'));
+  const base=tuition.length*700,id=randomUUID();const custom={action:'custom_add',invoice,id,name:'10月未列帳學費',amount:1200,notes:'家長確認補登'};
+  await bill(custom);await bill(custom);await draft(student,'2030-11-01');state=await list();
+  assert.equal(state.items.filter(i=>i.invoice===invoice&&i.kind==='custom').length,1);assert.equal(state.invoices.find(v=>v.id===invoice).total,base+1200);
+  await assert.rejects(bill({...custom,id:randomUUID(),amount:-1}),/正整數/);
+  await bill({action:'custom_remove',invoice,id});await bill({action:'custom_remove',invoice,id});
+  await rpc({action:'fee',student,fee:0});await draft(student,'2030-11-01');state=await list();assert.equal(state.invoices.find(v=>v.id===invoice).total,0);
+  await rpc({action:'fee',student,fee:850});await draft(student,'2030-11-01');await bill({...custom,id:randomUUID(),name:'活動費',amount:900});
+  await issue(invoice);state=await list();const frozen=state.items.filter(i=>i.invoice===invoice);assert.equal(state.invoices.find(v=>v.id===invoice).total,tuition.length*850+900);
+  await rpc({action:'fee',student,fee:999});assert.deepEqual((await list()).items.filter(i=>i.invoice===invoice),frozen);
+  await assert.rejects(bill({...custom,id:randomUUID()}),/只有草稿/);await assert.rejects(bill({action:'custom_remove',invoice,id:frozen.find(i=>i.kind==='custom').id}),/只有草稿/);
+  assert.ok(state.audit.some(a=>a.action==='custom_add'&&a.after_data.label==='活動費'&&a.actor===admin));
  });
  await t.test('unknown, suspended and anonymous callers cannot read or change billing',async()=>{
   await as(outsider);await assert.rejects(list(),/停用|權限/);assert.equal((await rows('select * from public.billing_invoices')).length,0);

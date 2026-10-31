@@ -65,4 +65,14 @@ test('student list and selected details scroll independently on a tablet',async(
  expect(await right.evaluate(el=>el.scrollTop)).toBe(rightTop);expect(await page.evaluate(()=>window.scrollY)).toBe(beforeY);
  const button=await page.getByRole('button',{name:'收合功能列',exact:true}).boundingBox();expect(button!.x).toBe(8);expect(button!.y).toBe(8);
  await page.screenshot({path:'test-results/independent-student-panes.png',fullPage:false});
+ // At a pane boundary, upward wheel movement must return to the page overview.
+ await right.evaluate(el=>el.scrollTop=0);await page.mouse.move(rightBox.x+rightBox.width/2,rightBox.y+200);await page.mouse.wheel(0,-1200);
+ await expect.poll(()=>page.evaluate(()=>window.scrollY)).toBeLessThan(beforeY);
+});
+
+test('collapsing navigation preserves the current page and student selection',async({page})=>{
+ await setup(page);await folder(page);await page.getByRole('textbox',{name:'學生備註',exact:true}).fill('尚未儲存');
+ await page.getByRole('button',{name:'收合功能列',exact:true}).click();await expect(page.getByRole('region',{name:'學生上課時間'})).toBeVisible();await expect(page.getByRole('textbox',{name:'學生備註',exact:true})).toHaveValue('尚未儲存');
+ await page.getByRole('button',{name:'展開功能列',exact:true}).click();await page.getByRole('button',{name:/課次與應收統計/}).click();await expect(page.getByRole('button',{name:'匯出 CSV'})).toBeVisible();
+ await page.getByRole('button',{name:'收合功能列',exact:true}).click();await expect(page.getByRole('button',{name:'匯出 CSV'})).toBeVisible();
 });

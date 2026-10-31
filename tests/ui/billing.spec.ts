@@ -18,7 +18,9 @@ test('material entry stays in student folder; billing reviews, issues, receives 
     data.invoices=[{id:vid,student:sid,student_name:'測試學生',month:'2026-11-01',state:'draft',total:3550,paid:0,fingerprint:'reviewed'}];
     data.items=[{id:'tuition',invoice:vid,kind:'tuition',label:'11 月預定課程 4 堂',amount:3200,posted:false,snapshot:{}},
      {id:'material',invoice:vid,kind:'material',label:'鋼琴教本',amount:350,material:data.materials[0].id,posted:false,snapshot:{quantity:1,unit_price:350,purchased:'2026-10-31'}}];result={ok:true,invoice:vid};
-   }else if(b.action==='issue'){expect(b.fingerprint).toBe('reviewed');data.invoices[0].state='issued';data.items.forEach((i:any)=>i.posted=true);result={ok:true}}
+   }else if(b.action==='custom_add'){data.items.push({id:b.id,invoice:vid,kind:'custom',label:b.name,amount:b.amount,posted:false,snapshot:{notes:b.notes}});data.invoices[0].total+=b.amount;result={ok:true}}
+   else if(b.action==='custom_remove'){const item=data.items.find((i:any)=>i.id===b.id);data.invoices[0].total-=item.amount;data.items=data.items.filter((i:any)=>i.id!==b.id);result={ok:true}}
+   else if(b.action==='issue'){expect(b.fingerprint).toBe('reviewed');data.invoices[0].state='issued';data.items.forEach((i:any)=>i.posted=true);result={ok:true}}
    else if(b.action==='payment'){data.payments.push({...b,actor:'teacher',reverses:null});data.invoices[0].paid+=b.amount;result={ok:true}}
   }
   await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(result)});
@@ -27,7 +29,11 @@ test('material entry stays in student folder; billing reviews, issues, receives 
  await page.getByText('＋ 登記購入教材',{exact:true}).click();await page.getByLabel('教材名稱').fill('鋼琴教本');await page.getByLabel('單價（TWD）').fill('350');await page.getByRole('button',{name:'儲存教材',exact:true}).click();
  await expect(page.getByRole('region',{name:'教材紀錄'})).toContainText('待代收');expect(calls.find(b=>b.action==='material')).toMatchObject({student:sid,name:'鋼琴教本',quantity:1,unit_price:350,purchased:'2026-10-31'});
  await page.getByRole('button',{name:/學費袋與收款/}).click();await page.getByLabel('收費月份').fill('2026-11');await page.getByLabel('學生',{exact:true}).selectOption(sid);await page.getByRole('button',{name:'產生／重算草稿'}).click();
- await expect(page.getByRole('article')).toContainText('鋼琴教本');await page.getByRole('button',{name:'確認金額並正式開立'}).click();
+ await expect(page.getByRole('article')).toContainText('鋼琴教本');
+ await page.getByText('＋ 自訂費用',{exact:true}).click();await page.getByLabel('自訂費用名稱').fill('10月未列帳學費');await page.getByLabel('自訂費用金額（TWD）').fill('800');await page.getByLabel('自訂費用備註').fill('補登');await page.getByRole('button',{name:'加入自訂費用'}).click();
+ await expect(page.getByRole('article')).toContainText('10月未列帳學費');expect(calls.find(b=>b.action==='custom_add')).toMatchObject({name:'10月未列帳學費',amount:800,notes:'補登'});
+ await page.getByRole('button',{name:'移除自訂費用'}).click();await expect(page.getByRole('article')).not.toContainText('10月未列帳學費');
+ await page.getByRole('button',{name:'確認金額並正式開立'}).click();await expect(page.getByText('＋ 自訂費用',{exact:true})).toHaveCount(0);
  await page.getByLabel('金額',{exact:true}).fill('2000');await page.getByLabel('方式').selectOption('transfer');await page.getByRole('button',{name:'確認收款',exact:true}).click();
  await expect(page.getByRole('article')).toContainText('部分收款');await expect(page.getByRole('article')).toContainText('1,550');
  await page.screenshot({path:'test-results/billing-partial.png',fullPage:true});
