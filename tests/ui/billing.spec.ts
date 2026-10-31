@@ -31,12 +31,12 @@ test('material entry stays in student folder; billing reviews, issues, receives 
  await expect(page.getByRole('region',{name:'教材紀錄'})).toContainText('待代收');expect(calls.find(b=>b.action==='material')).toMatchObject({student:sid,name:'鋼琴教本',quantity:1,unit_price:350,purchased:'2026-10-31'});
  await page.getByRole('button',{name:/學費袋與收款/}).click();await page.getByLabel('收費月份').fill('2026-11');await page.getByLabel('學生',{exact:true}).selectOption(sid);await page.getByRole('button',{name:'產生／重算草稿'}).click();
  await expect(page.getByRole('article')).toContainText('鋼琴教本');
- await page.getByText('＋ 自訂費用',{exact:true}).click();await page.getByLabel('自訂費用名稱').fill('10月未列帳學費');await page.getByLabel('自訂費用金額（TWD）').fill('800');await page.getByLabel('自訂費用備註').fill('補登');await page.getByRole('button',{name:'加入自訂費用'}).click();
+ await page.getByRole('article').getByRole('button',{name:'＋ 自訂費用',exact:true}).click();await page.getByLabel('自訂費用名稱').fill('10月未列帳學費');await page.getByLabel('自訂費用金額（TWD）').fill('800');await page.getByLabel('自訂費用備註').fill('補登');await page.getByRole('button',{name:'加入自訂費用'}).click();
  await expect(page.getByRole('article')).toContainText('10月未列帳學費');expect(calls.find(b=>b.action==='custom_add')).toMatchObject({name:'10月未列帳學費',amount:800,notes:'補登'});
  await page.getByRole('button',{name:'刪除費用：10月未列帳學費',exact:true}).click();await expect(page.getByRole('cell',{name:/10月未列帳學費/})).toHaveCount(0);
  await page.getByRole('button',{name:'刪除費用：11 月預定課程 4 堂',exact:true}).click();await expect(page.getByRole('cell',{name:'11 月預定課程 4 堂',exact:true})).toHaveCount(0);
  await page.getByText('已刪除費用（可還原）',{exact:true}).click();await page.locator('.lesson').filter({hasText:'11 月預定課程 4 堂'}).getByRole('button',{name:'還原費用',exact:true}).click();await expect(page.getByRole('cell',{name:'11 月預定課程 4 堂',exact:true})).toBeVisible();
- await page.getByRole('button',{name:'確認金額並正式開立'}).click();await expect(page.getByRole('button',{name:/刪除費用：/})).toHaveCount(0);await expect(page.getByRole('button',{name:'＋ 自訂費用',exact:true})).toBeVisible();
+ await page.getByRole('button',{name:'確認金額並正式開立'}).click();await expect(page.getByRole('button',{name:/刪除費用：/})).toHaveCount(0);await expect(page.getByRole('button',{name:'＋ 自訂費用',exact:true})).toHaveCount(0);
  await page.getByLabel('金額',{exact:true}).fill('2000');await page.getByLabel('方式').selectOption('transfer');await page.getByRole('button',{name:'確認收款',exact:true}).click();
  await expect(page.getByRole('article')).toContainText('部分收款');await expect(page.getByRole('article')).toContainText('1,550');
  await page.screenshot({path:'test-results/billing-partial.png',fullPage:true});
