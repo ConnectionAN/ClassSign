@@ -1,4 +1,7 @@
 node_modules/
+supabase/.temp/
+test-results/
+playwright-report/
 dist/
 .env*
 !.env.example
