@@ -17,6 +17,7 @@ async function setup(page:Page,makeup=false){
   if(url.pathname.endsWith('/rpc/studio_action')){
    const b=route.request().postDataJSON().b;calls.push(b);
    if(b.action==='calendar')result={sessions:sessions.filter(c=>c.day>=b.from&&c.day<=b.to),slots:[],pending:sessions.filter(c=>c.status==='leave'&&c.needs_makeup),makeups:makeup?sessions.filter(c=>c.status==='planned'):[],origins:makeup?[{...initial,id:'original-session',day:'2026-10-17',status:'leave',needs_makeup:true}]:[],events:[]};
+   else if(b.action==='student_schedule')result={slots:[],next:null};
    else if(b.action==='leave'){sessions=sessions.map(c=>({...c,status:'leave',needs_makeup:b.needsMakeup}));result={ok:true};}
    else if(b.action==='lesson'){lessons.push({id:b.id,student:sid,day:b.day,fee:b.actualFee,voided:null});sessions=sessions.map(c=>({...c,status:'signed'}));result={ok:true};}
    else result={ok:true};

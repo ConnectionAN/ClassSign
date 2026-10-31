@@ -10,3 +10,5 @@
 .account-bar{padding:12px 24px;background:white;border-bottom:1px solid var(--line);position:relative;z-index:1;margin-left:246px}.account{margin:0;max-width:560px}.account-bar>button{margin-top:8px}@media(max-width:1100px){.account-bar{margin-left:200px}}@media(max-width:760px){.account-bar{margin-left:0}}
 
 .account-table{overflow-x:auto}.account-directory td{overflow-wrap:anywhere;min-width:90px}.account-directory td:first-child{min-width:180px}.account-directory .dialog button{margin:8px}
+
+.student-schedule{border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-top:20px;padding-bottom:18px}.student-schedule .row{flex-wrap:wrap}.student-schedule small{color:var(--muted);font-size:11px}.student-schedule .dialog button{margin-right:8px}

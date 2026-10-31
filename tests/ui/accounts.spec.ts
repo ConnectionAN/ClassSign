@@ -10,6 +10,7 @@ async function setup(page:Page,admin=false){
  await page.route('https://classsign-test.invalid/**',async route=>{
   const url=new URL(route.request().url());let result:any=[];
   if(url.pathname.endsWith('/logout'))return route.fulfill({status:204});
+  if(url.pathname.endsWith('/rpc/studio_action'))result={sessions:[],slots:[],pending:[],makeups:[],origins:[],events:[]};
   if(url.pathname.endsWith('/teacher_access'))result={user_id:user};
   if(url.pathname.endsWith('/rpc/account_action')){
    const b=route.request().postDataJSON().b;calls.push(b);
