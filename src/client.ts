@@ -3,7 +3,7 @@ const url=import.meta.env.VITE_SUPABASE_URL;
 const key=import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 export const configured=!!url&&!!key&&!url.includes('YOUR_PROJECT')&&!key.includes('YOUR_PUBLISHABLE');
 if(key&&(key.startsWith('sb_secret_')))throw new Error('請使用 publishable key，不能使用 secret key');
-export const supabase=configured?createClient(url,key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}}):null;
+export const supabase=configured?createClient(url,key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,flowType:'pkce'}}):null;
 export async function studioRequest(b?:Record<string,unknown>){
  if(!supabase)throw new Error('尚未設定 Supabase');
  if(b){const {data,error}=await supabase.rpc('studio_action',{b});if(error)throw new Error(error.message);return data;}

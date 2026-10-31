@@ -21,6 +21,16 @@ test('PostgreSQL migration and RPC: access, snapshots, retry, immutable records'
  await assert.rejects(rpc({...first,teacher:sign+'changed'}),/識別碼/);
  await rpc({action:'void',student:sid,id:lesson,reason:'測試作廢'});
  assert.equal((await db.query('select sum(fee)::int total from public.lessons where voided is null')).rows[0].total,1200);
+ // A Google login for the SAME auth UUID must preserve every business row.
+ const snapshot=JSON.stringify((await db.query('select to_jsonb(s) row from public.students s')).rows)+JSON.stringify((await db.query('select to_jsonb(l) row from public.lessons l order by id')).rows)+JSON.stringify((await db.query('select to_jsonb(f) row from public.fee_changes f order by id')).rows);
+ await db.query("select set_config('request.jwt.claims',$1,false)",[JSON.stringify({sub:a,email:'same@example.test',app_metadata:{provider:'google'}})]);
+ await as(a);assert.equal((await db.query('select * from public.students')).rows.length,1);
+ assert.equal(snapshot,JSON.stringify((await db.query('select to_jsonb(s) row from public.students s')).rows)+JSON.stringify((await db.query('select to_jsonb(l) row from public.lessons l order by id')).rows)+JSON.stringify((await db.query('select to_jsonb(f) row from public.fee_changes f order by id')).rows));
+ // The same email/claimed teacher metadata on a DIFFERENT UUID grants nothing.
+ await db.query("select set_config('request.jwt.claims',$1,false)",[JSON.stringify({sub:b,email:'same@example.test',user_metadata:{role:'teacher'},app_metadata:{provider:'google'}})]);
+ await as(b);await assert.rejects(db.query('insert into public.teacher_access values($1)',[b]));
+ assert.equal((await db.query('select * from public.lessons')).rows.length,0);
+ assert.equal((await db.query('select * from public.fee_changes')).rows.length,0);
  await as(b);assert.equal((await db.query('select * from public.students')).rows.length,0);
  await assert.rejects(rpc({action:'detail',student:sid,id:lesson}),/老師權限/);
  await db.exec('reset role');await db.query('insert into public.teacher_access values($1)',[b]);await as(b);
