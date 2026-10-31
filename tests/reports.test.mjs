@@ -3,6 +3,24 @@ import {readFileSync,readdirSync} from 'node:fs';
 import {randomUUID} from 'node:crypto';
 import test from 'node:test';import assert from 'node:assert/strict';
 import {buildReports,periodRange,csvText} from '../src/reportModel.ts';
+test('October 31 advance receipt of 2850 belongs to November; refunds and filters follow the same cohort',()=>{
+ const d={students:[{id:'s',name:'跨月預繳學生',active:1}],invoices:[{id:'v',student:'s',student_name:'跨月預繳學生',month:'2026-11-01',state:'issued'}],
+  items:[{invoice:'v',amount:2850,posted:true}],payments:[{id:'p',invoice:'v',day:'2026-10-31',amount:2850,method:'transfer',reverses:null}],
+  adjustments:[],materials:[],lessons:[],sessions:[],pending:[]};
+ const f={from:'2026-10-01',to:'2026-10-31',student:'',status:'',materialBasis:'purchase'};
+ const before=JSON.stringify(d);
+ assert.equal(buildReports(d,f).summary.cash,0);assert.equal(buildReports(d,f).receipts.length,0);
+ const nov={...f,from:'2026-11-01',to:'2026-11-30'};
+ let r=buildReports(d,nov);assert.equal(r.summary.cash,2850);assert.equal(r.summary.outstanding,0);assert.equal(r.receipts[0].day,'2026-10-31');
+ assert.equal(buildReports(d,{...nov,from:'2026-11-15',to:'2026-11-16'}).summary.cash,2850);
+ assert.equal(buildReports(d,{...f,...periodRange('quarter','2026-11')}).summary.cash,2850);
+ assert.equal(buildReports(d,{...f,...periodRange('year','2026-11')}).summary.cash,2850);
+ assert.equal(buildReports(d,{...nov,student:'other'}).summary.cash,0);
+ assert.equal(buildReports(d,{...nov,status:'unpaid'}).summary.cash,0);assert.equal(JSON.stringify(d),before);
+ d.payments.push({id:'reverse',invoice:'v',day:'2026-12-02',amount:-2850,method:'transfer',reverses:'p'});
+ assert.equal(buildReports(d,nov).summary.cash,0);assert.equal(buildReports(d,nov).summary.outstanding,2850);
+ assert.equal(buildReports(d,{...f,from:'2026-12-01',to:'2026-12-31'}).receipts.length,0);
+});
 test('reports: real ledger, read-only virtual schedule, cash dates, reversal and RLS',async t=>{
  const db=new PGlite();t.after(()=>db.close());const admin=randomUUID(),other=randomUUID();
  await db.exec(`create role anon;create role authenticated;create schema auth;
@@ -28,12 +46,12 @@ test('reports: real ledger, read-only virtual schedule, cash dates, reversal and
  await issue(nov);const p=randomUUID();await bill({action:'payment',invoice:nov,id:p,amount:2000,method:'cash',day:'2025-11-03'});
  await bill({action:'payment',invoice:nov,id:randomUUID(),amount:2350,method:'transfer',day:'2025-12-02'});
  const draft=(await bill({action:'draft',student:sid,month:'2025-12-01'})).invoice;
- await t.test('cohorts exclude drafts; cross-month cash differs from allocated balance',async()=>{
+ await t.test('cohorts exclude drafts; cross-month receipts follow invoice month',async()=>{
   const d=await snapshot(),r=buildReports(d,filters);
-  assert.equal(r.summary.due,4350);assert.equal(r.summary.cash,2000);assert.equal(r.summary.allocated,4350);assert.equal(r.summary.outstanding,0);
+  assert.equal(r.summary.due,4350);assert.equal(r.summary.cash,4350);assert.equal(r.summary.allocated,4350);assert.equal(r.summary.outstanding,0);
   assert.equal(r.materials[0].state,'整張學費袋結清');
   const dec=buildReports(await snapshot('2025-12-01','2025-12-31'),{...filters,from:'2025-12-01',to:'2025-12-31'});
-  assert.equal(dec.summary.due,0);assert.equal(dec.summary.cash,2350);assert.equal(dec.bags[0].id,draft);
+  assert.equal(dec.summary.due,0);assert.equal(dec.summary.cash,0);assert.equal(dec.bags[0].id,draft);
   assert.equal(buildReports(d,{...filters,from:'2025-11-15',to:'2025-11-16'}).summary.due,4350);
   assert.equal(buildReports(d,{...filters,student:randomUUID()}).summary.due,0);
  });
@@ -50,17 +68,17 @@ test('reports: real ledger, read-only virtual schedule, cash dates, reversal and
   assert.equal((await rows("select prosecdef from pg_proc where proname='report_snapshot'"))[0].prosecdef,false);
   await assert.rejects(snapshot('2025-12-01','2025-11-01'),/有效期間/);
  });
- await t.test('negative reversal is dated on correction, void does not erase historic cash',async()=>{
+ await t.test('negative reversal reduces original invoice month; void excludes receipts',async()=>{
   await bill({action:'reverse_payment',invoice:nov,payment:p,reason:'輸入更正'});
   const d=await snapshot();const correction=d.payments.find(x=>x.reverses===p);
   assert.equal(Number(correction.amount),-2000);
   const current=buildReports(d,{...filters,from:correction.day,to:correction.day});
-  assert.equal(current.summary.cash,-2000);
-  assert.equal(buildReports(d,filters).summary.outstanding,2000);
+  assert.equal(current.summary.cash,0);
+  assert.equal(buildReports(d,filters).summary.outstanding,2000);assert.equal(buildReports(d,filters).summary.cash,2350);
   const second=d.payments.find(x=>!x.reverses&&x.id!==p);
   await bill({action:'reverse_payment',invoice:nov,payment:second.id,reason:'重新開立'});
   await bill({action:'void',invoice:nov,reason:'重開'});
-  const r=buildReports(await snapshot(),filters);assert.equal(r.summary.due,0);assert.equal(r.summary.cash,2000);
+  const r=buildReports(await snapshot(),filters);assert.equal(r.summary.due,0);assert.equal(r.summary.cash,0);
   assert.equal(r.materials[0].state,'待代收');
  });
  await t.test('unknown, disabled and anonymous callers cannot invoke or select report data',async()=>{

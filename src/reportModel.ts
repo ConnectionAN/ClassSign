@@ -34,8 +34,8 @@ export function buildReports(d:Snapshot,f:Filters){
  const official=bags.filter(v=>v.state==='issued');
  const receipts=d.payments.flatMap(p=>{
   const v=invoices.find(v=>v.id===p.invoice);
-  // Include reversal entries even if the bag was subsequently voided.
-  return v&&invoiceOK(v)&&within(p.day)?[{...p,student_name:v.student_name,month:v.month,status:v.status}]:[];
+  // Attribute all net receipts to the issued invoice month, including cross-month reversals.
+  return v&&v.state==='issued'&&invoiceOK(v)&&inMonth(v.month)?[{...p,student_name:v.student_name,month:v.month,status:v.status}]:[];
  });
  const adjustments=d.adjustments.filter(a=>studentOK(a.student)).map(a=>({...a,
   remaining:Number(a.amount)+sum(d.items.filter(i=>i.posted&&i.adjustment===a.id).map(i=>Number(i.amount)))
