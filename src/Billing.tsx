@@ -1,4 +1,4 @@
-import {useEffect,useState} from 'react';
+import {useEffect,useRef,useState} from 'react';
 import {supabase} from './client';
 type Student={id:string;name:string;active:number};
 type Invoice={id:string;student:string;student_name:string;month:string;state:string;total:number;paid:number;fingerprint:string};
@@ -11,15 +11,16 @@ const today=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Taipei',year:'nu
 const money=(n:number)=>new Intl.NumberFormat('zh-TW',{style:'currency',currency:'TWD',maximumFractionDigits:0}).format(n);
 const status=(v:Invoice)=>v.state==='void'?'已作廢':v.state==='draft'?'草稿':v.paid>=v.total?'已結清':v.paid>0?'部分收款':'已開立';
 async function request(b:Record<string,unknown>){if(!supabase)throw Error('尚未設定 Supabase');const {data,error}=await supabase.rpc('billing_action',{b});if(error)throw Error(error.message);return data;}
-export default function Billing({students,student}:{students:Student[];student?:string}){
+export default function Billing({students,student,initialTarget}:{students:Student[];student?:string;initialTarget?:{student:string;month:string;id:string}}){
  const [data,setData]=useState<Data>(empty),[error,setError]=useState(''),[busy,setBusy]=useState(false),[loaded,setLoaded]=useState(false);
- const [month,setMonth]=useState(today().slice(0,7)),[sid,setSid]=useState(student||''),[selected,setSelected]=useState(''),[search,setSearch]=useState(''),[state,setState]=useState('');
+ const [month,setMonth]=useState(initialTarget?.month.slice(0,7)||today().slice(0,7)),[sid,setSid]=useState(student||initialTarget?.student||''),[selected,setSelected]=useState(''),[search,setSearch]=useState(''),[state,setState]=useState('');
  const [name,setName]=useState(''),[purchased,setPurchased]=useState(today()),[quantity,setQuantity]=useState('1'),[price,setPrice]=useState(''),[notes,setNotes]=useState(''),[materialId,setMaterialId]=useState(crypto.randomUUID());
  const [amount,setAmount]=useState(''),[method,setMethod]=useState('cash'),[day,setDay]=useState(today()),[paymentNotes,setPaymentNotes]=useState(''),[paymentId,setPaymentId]=useState(crypto.randomUUID()),[reason,setReason]=useState('');
  const [customName,setCustomName]=useState(''),[customAmount,setCustomAmount]=useState(''),[customNotes,setCustomNotes]=useState(''),[customId,setCustomId]=useState(crypto.randomUUID());
+ const targetApplied=useRef(false);
  const [customOpen,setCustomOpen]=useState(false);
  useEffect(()=>{setCustomOpen(false);setCustomName('');setCustomAmount('');setCustomNotes('');setCustomId(crypto.randomUUID())},[selected]);
- async function load(){const d=await request({action:'list'});setData({...empty,...d});setLoaded(true)}
+ async function load(){const d=await request({action:'list'});setData({...empty,...d});setLoaded(true);if(initialTarget&&!targetApplied.current){targetApplied.current=true;setSelected(initialTarget.id)}}
  useEffect(()=>{load().catch(e=>setError(String(e)))},[]);
  async function send(b:Record<string,unknown>,done?:()=>void){if(busy)return;setBusy(true);setError('');try{const r=await request(b);if(r.invoice&&b.action==='draft')setSelected(r.invoice);done?.();await load()}catch(e){setError(String(e))}finally{setBusy(false)}}
  async function addCustom(){if(busy)return;const draft=data.invoices.find(v=>v.id===selected&&v.state==='draft');if(!draft){setError('請先選擇學費草稿');return}setBusy(true);setError('');try{

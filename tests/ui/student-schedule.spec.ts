@@ -8,6 +8,7 @@ async function setup(page:Page){
   const path=new URL(route.request().url()).pathname;let result:any=[];
   if(path.endsWith('/teacher_access'))result={user_id:'teacher'};
   if(path.endsWith('/rpc/account_action')){calls.push(route.request().postDataJSON().b);result={user_id:'teacher',is_admin:false,disabled:false}};
+  if(path.endsWith('/rpc/report_snapshot'))result={generated_at:'2026-10-31T02:00:00Z',students:[],invoices:[],items:[],payments:[],adjustments:[],materials:[],lessons:[],sessions:[],pending:[]};
   if(path.endsWith('/students'))result=[{id:sid,name:studentName,fee:800,active,notes,created:'2026-10-01'}];
   if(path.endsWith('/rpc/studio_action')){
    const b=route.request().postDataJSON().b;calls.push(b);
@@ -74,7 +75,7 @@ test('student list and selected details scroll independently on a tablet',async(
 test('collapsing navigation preserves the current page and student selection',async({page})=>{
  await setup(page);await folder(page);await page.getByRole('textbox',{name:'學生備註',exact:true}).fill('尚未儲存');
  await page.getByRole('button',{name:'收合功能列',exact:true}).click();await expect(page.getByRole('region',{name:'學生上課時間'})).toBeVisible();await expect(page.getByRole('textbox',{name:'學生備註',exact:true})).toHaveValue('尚未儲存');
- await page.getByRole('button',{name:'展開功能列',exact:true}).click();await page.getByRole('button',{name:/課次與應收統計/}).click();await expect(page.getByRole('button',{name:'匯出 CSV'})).toBeVisible();
+ await page.getByRole('button',{name:'展開功能列',exact:true}).click();await page.getByRole('button',{name:/統計報表/}).click();await expect(page.getByRole('button',{name:'匯出 CSV'})).toBeVisible();
  await page.getByRole('button',{name:'收合功能列',exact:true}).click();await expect(page.getByRole('button',{name:'匯出 CSV'})).toBeVisible();
  await page.reload();await expect(page.getByRole('button',{name:'匯出 CSV'})).toBeVisible();
 });
