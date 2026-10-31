@@ -1,20 +1,21 @@
 import {test,expect,type Page} from '@playwright/test';
 const sid='11111111-1111-4111-8111-111111111111',slot='22222222-2222-4222-8222-222222222222';
 async function setup(page:Page){
- let active=1,notes='';let summary={slots:[{id:slot,weekday:1,minute:540,duration:60,starts:'2026-10-01',ends:null}],next:{day:'2026-11-03',minute:600,duration:60,source:'moved'}};const calls:any[]=[];
+ let active=1,notes='',studentName='測試學生';let summary={slots:[{id:slot,weekday:1,minute:540,duration:60,starts:'2026-10-01',ends:null}],next:{day:'2026-11-03',minute:600,duration:60,source:'moved'}};const calls:any[]=[];
  await page.clock.install({time:new Date('2026-10-31T02:00:00Z')});
  await page.addInitScript(()=>{const payload=btoa(JSON.stringify({sub:'teacher',exp:2000000000,role:'authenticated'}));localStorage.setItem('sb-classsign-test-auth-token',JSON.stringify({access_token:'eyJhbGciOiJIUzI1NiJ9.'+payload+'.test',refresh_token:'test',expires_at:2000000000,token_type:'bearer',user:{id:'teacher',email:'teacher@example.com',app_metadata:{},user_metadata:{},aud:'authenticated'}}))});
  await page.route('https://classsign-test.invalid/**',async route=>{
   const path=new URL(route.request().url()).pathname;let result:any=[];
   if(path.endsWith('/teacher_access'))result={user_id:'teacher'};
-  if(path.endsWith('/rpc/account_action'))result={user_id:'teacher',is_admin:false,disabled:false};
-  if(path.endsWith('/students'))result=[{id:sid,name:'測試學生',fee:800,active,notes,created:'2026-10-01'}];
+  if(path.endsWith('/rpc/account_action')){calls.push(route.request().postDataJSON().b);result={user_id:'teacher',is_admin:false,disabled:false}};
+  if(path.endsWith('/students'))result=[{id:sid,name:studentName,fee:800,active,notes,created:'2026-10-01'}];
   if(path.endsWith('/rpc/studio_action')){
    const b=route.request().postDataJSON().b;calls.push(b);
    if(b.action==='calendar')result={sessions:[],slots:[],pending:[],makeups:[],origins:[],events:[]};
    else if(b.action==='student_schedule')result=active?summary:{slots:[],next:null};
    else if(b.action==='replace_slot'){summary={slots:[{id:'replacement',weekday:b.weekday,minute:b.minute,duration:b.duration,starts:b.starts,ends:null}],next:{day:'2026-11-05',minute:b.minute,duration:b.duration,source:'regular'}};result={ok:true}}
    else if(b.action==='student_notes'){notes=b.notes;result={ok:true}}
+   else if(b.action==='student_rename'){studentName=b.name;result={ok:true}}
    else if(b.action==='archive'){active=active?0:1;result={ok:true}}
    else result={ok:true};
   }
@@ -75,4 +76,18 @@ test('collapsing navigation preserves the current page and student selection',as
  await page.getByRole('button',{name:'收合功能列',exact:true}).click();await expect(page.getByRole('region',{name:'學生上課時間'})).toBeVisible();await expect(page.getByRole('textbox',{name:'學生備註',exact:true})).toHaveValue('尚未儲存');
  await page.getByRole('button',{name:'展開功能列',exact:true}).click();await page.getByRole('button',{name:/課次與應收統計/}).click();await expect(page.getByRole('button',{name:'匯出 CSV'})).toBeVisible();
  await page.getByRole('button',{name:'收合功能列',exact:true}).click();await expect(page.getByRole('button',{name:'匯出 CSV'})).toBeVisible();
+ await page.reload();await expect(page.getByRole('button',{name:'匯出 CSV'})).toBeVisible();
+});
+
+test('same-user sign-in notification preserves the workspace and unsaved notes',async({page})=>{
+ const calls=await setup(page);await folder(page);await page.getByRole('textbox',{name:'學生備註',exact:true}).fill('重新驗證也保留');const before=calls.filter(b=>b.action==='status').length;
+ await page.evaluate(()=>{const session=JSON.parse(localStorage.getItem('sb-classsign-test-auth-token')!);const channel=new BroadcastChannel('sb-classsign-test-auth-token');channel.postMessage({event:'SIGNED_IN',session});channel.close()});
+ await expect.poll(async()=>{await page.clock.runFor(100);return calls.filter(b=>b.action==='status').length}).toBeGreaterThan(before);await expect(page.getByRole('textbox',{name:'學生備註',exact:true})).toHaveValue('重新驗證也保留');
+ await page.getByRole('button',{name:'收合功能列',exact:true}).click();await expect(page.getByRole('textbox',{name:'學生備註',exact:true})).toHaveValue('重新驗證也保留');
+});
+
+test('student name edit saves the same student identifier and refreshes the folder',async({page})=>{
+ const calls=await setup(page);await folder(page);await page.getByRole('button',{name:'編輯學生姓名',exact:true}).click();
+ await page.getByRole('dialog').getByLabel('學生姓名',{exact:true}).fill('更正後姓名');await page.getByRole('button',{name:'儲存姓名',exact:true}).click();
+ await expect(page.getByRole('heading',{name:'更正後姓名',exact:true})).toBeVisible();expect(calls.find(b=>b.action==='student_rename')).toMatchObject({student:sid,name:'更正後姓名',expectedName:'測試學生'});
 });
