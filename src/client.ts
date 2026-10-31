@@ -10,8 +10,8 @@ export async function studioRequest(b?:Record<string,unknown>){
  const access=await supabase.from('teacher_access').select('user_id').maybeSingle();
  if(access.error)throw new Error(access.error.message);if(!access.data)throw new Error('此帳號尚未啟用老師權限，請依設定指南加入 teacher_access');
  async function all(table:string,columns:string,order:string){let result:unknown[]=[];for(let page=0;;page++){const {data,error}=await supabase!.from(table).select(columns).order(order,{ascending:false}).order('id',{ascending:false}).range(page*500,page*500+499);if(error)throw new Error(error.message);result=result.concat(data);if(data.length<500)return result;}}
- const [students,lessons,fees]=await Promise.all([all('students','*','created'),all('lessons','id,student,day,fee,created,reason,voided','created'),all('fee_changes','*','changed')]);
+ const [students,lessons,fees,slots]=await Promise.all([all('students','*','created'),all('lessons','id,student,day,fee,created,reason,voided','created'),all('fee_changes','*','changed'),all('weekly_slots','*','starts')]);
  lessons.sort((a:any,b:any)=>b.day.localeCompare(a.day)||b.created.localeCompare(a.created));
- return {students,lessons,fees};
+ return {students,lessons,fees,slots};
 }
 

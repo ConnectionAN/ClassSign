@@ -19,6 +19,7 @@ async function setup(page:Page,makeup=false){
    if(b.action==='calendar')result={sessions:sessions.filter(c=>c.day>=b.from&&c.day<=b.to),slots:[],pending:sessions.filter(c=>c.status==='leave'&&c.needs_makeup),makeups:makeup?sessions.filter(c=>c.status==='planned'):[],origins:makeup?[{...initial,id:'original-session',day:'2026-10-17',status:'leave',needs_makeup:true}]:[],events:[]};
    else if(b.action==='student_schedule')result={slots:[],next:null};
    else if(b.action==='leave'){sessions=sessions.map(c=>({...c,status:'leave',needs_makeup:b.needsMakeup}));result={ok:true};}
+   else if(b.action==='oneoff_lesson'){lessons.push({id:b.id,student:b.student,day:b.day,fee:1200,voided:null});result={ok:true};}
    else if(b.action==='lesson'){lessons.push({id:b.id,student:sid,day:b.day,fee:b.actualFee,voided:null});sessions=sessions.map(c=>({...c,status:'signed'}));result={ok:true};}
    else result={ok:true};
   }
@@ -84,4 +85,38 @@ test('arranged makeup remains visible until signed and links its original leave 
  await page.getByRole('button',{name:'2026-10-17 09:00 · 測試學生'}).click();
  await expect(page.getByRole('dialog')).toContainText('2026-10-17 09:00–10:00 · 請假');
  await expect(page.getByText('本月已完成',{exact:true})).toHaveCount(0);
+});
+
+test('calendar dialogs and pending makeup never render tuition',async({page})=>{
+ await setup(page);await expect(page.locator('main')).not.toContainText(/學費|NT\$|應收|計費/);
+ await page.getByRole('button',{name:/09:00–10:00/}).click();
+ await expect(page.getByRole('dialog')).not.toContainText(/學費|NT\$/);
+ await page.getByRole('button',{name:'請假',exact:true}).click();await page.getByLabel('這次請假是否需要補課').selectOption('yes');await page.getByRole('button',{name:'確認儲存'}).click();
+ await expect(page.locator('main')).not.toContainText(/學費|NT\$/);
+ await page.getByRole('button',{name:'安排補課',exact:true}).click();await expect(page.getByRole('dialog')).not.toContainText(/學費|NT\$/);
+});
+test('collapsed tablet layout fits seven days and removes other page entrances',async({page})=>{
+ await page.setViewportSize({width:1024,height:768});await setup(page);
+ await page.getByRole('button',{name:'收合功能列',exact:true}).click();
+ await expect(page.getByRole('button',{name:'學生資料夾',exact:false})).toBeHidden();
+ await expect(page.locator('aside')).toBeHidden();
+ for(const size of [{width:1024,height:768},{width:768,height:1024}]){
+  await page.setViewportSize(size);
+  const sizes=await page.locator('.calendar.week').evaluate(el=>({width:el.clientWidth,scroll:el.scrollWidth,children:el.children.length,right:el.lastElementChild!.getBoundingClientRect().right,viewport:innerWidth,bottom:el.getBoundingClientRect().bottom,viewportHeight:innerHeight}));
+  expect(sizes.children).toBe(7);expect(sizes.scroll).toBeLessThanOrEqual(sizes.width+1);expect(sizes.right).toBeLessThanOrEqual(sizes.viewport);expect(sizes.bottom).toBeLessThanOrEqual(sizes.viewportHeight);
+ }
+ await page.screenshot({path:'test-results/tablet-seven-days.png',fullPage:true});
+ await page.reload();await expect(page.locator('aside')).toBeHidden();
+ await page.getByRole('button',{name:'☰ 展開功能列'}).click();await expect(page.getByRole('button',{name:'學生資料夾',exact:false})).toBeVisible();
+});
+test('one-off signing selects a student and time, clears signatures after edits and submits without fee fields',async({page})=>{
+ const calls=await setup(page);await page.getByRole('button',{name:'＋ 單堂簽到'}).click();const dialog=page.getByRole('dialog');
+ await expect(dialog).not.toContainText(/學費|NT\$/);await expect(page.getByLabel('簽到學生')).toHaveValue(sid);
+ await page.getByLabel('上課日期').fill('2026-10-30');await page.getByLabel('上課開始時間').fill('15:00');
+ await ink(page,'老師簽名');await ink(page,'學生／家長簽名');
+ const submit=page.getByRole('button',{name:'確認雙方簽署並儲存'});await expect(submit).toBeEnabled();
+ await page.getByLabel('上課開始時間').fill('15:30');await expect(submit).toBeDisabled();
+ await ink(page,'老師簽名');await ink(page,'學生／家長簽名');await submit.click();
+ await expect.poll(()=>calls.find(c=>c.action==='oneoff_lesson')).toMatchObject({student:sid,day:'2026-10-30',minute:930,duration:60});
+ expect(calls.find(c=>c.action==='oneoff_lesson')).not.toHaveProperty('actualFee');
 });
