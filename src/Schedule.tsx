@@ -8,7 +8,7 @@ const today=()=>new Date().toLocaleDateString('en-CA',{timeZone:'Asia/Taipei'});
 export const addDays=(d:string,n:number)=>new Date(Date.parse(d+'T00:00:00Z')+n*86400000).toISOString().slice(0,10);
 const time=(m:number)=>`${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`;
 const labels:Record<string,string>={planned:'待上課',leave:'請假',signed:'已雙簽',cancelled:'已取消'};
-const actions:Record<string,string>={leave:'請假',move:'單次調課',makeup:'安排補課',cancel:'取消',restore:'恢復',sign:'雙簽完成',void:'作廢簽到',stop_slot:'停止固定課表',archive:'封存學生'};
+const actions:Record<string,string>={leave:'請假',move:'單次調課',makeup:'安排補課',cancel:'取消',restore:'恢復',sign:'雙簽完成',void:'作廢簽到',replace_slot:'修改固定時段',stop_slot:'停止固定課表',archive:'封存學生'};
 export default function Schedule({students,onSign,revision}:{students:Student[];onSign:(s:Session)=>void;revision:number}){
  const [date,setDate]=useState(today()),[view,setView]=useState('week'),[data,setData]=useState<{sessions:Session[];pending:Session[];makeups:Session[];origins:Session[];slots:Slot[];events:Event[]}>({sessions:[],pending:[],makeups:[],origins:[],slots:[],events:[]}),[error,setError]=useState(''),[busy,setBusy]=useState(false),[loading,setLoading]=useState(true);
  const [form,setForm]=useState(''),[current,setCurrent]=useState<Session|null>(null),[student,setStudent]=useState(''),[day,setDay]=useState(today()),[clock,setClock]=useState('09:00'),[duration,setDuration]=useState(60),[weekday,setWeekday]=useState(1),[ends,setEnds]=useState(''),[need,setNeed]=useState(''),[reason,setReason]=useState(''),[stop,setStop]=useState<Slot|null>(null);

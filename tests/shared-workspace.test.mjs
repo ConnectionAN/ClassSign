@@ -9,7 +9,7 @@ const sign='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAAB';
 async function setup(){
  const db=new PGlite();
  await db.exec("create role anon;create role authenticated;create schema auth;create table auth.users(id uuid primary key);create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;grant usage on schema auth to authenticated;grant execute on function auth.uid() to authenticated;");
- for(const f of readdirSync(dir).filter(f=>f.endsWith('.sql')&&f!==file).sort())await db.exec(readFileSync(new URL(f,dir),'utf8'));
+ for(const f of readdirSync(dir).filter(f=>f.endsWith('.sql')&&f<file).sort())await db.exec(readFileSync(new URL(f,dir),'utf8'));
  return db;
 }
 test('shared studio: approved accounts manage the same immutable history and schedule',async t=>{
