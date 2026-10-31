@@ -19,7 +19,7 @@ test('a signed-in Google user without teacher_access cannot open the schedule or
  await page.route('https://classsign-test.invalid/**',async route=>{
   const path=new URL(route.request().url()).pathname;
   if(/students|lessons|fee_changes|studio_action/.test(path))businessReads++;
-  await route.fulfill({status:200,contentType:'application/json',body:'null'});
+  await route.fulfill({status:403,contentType:'application/json',body:JSON.stringify({code:'42501',message:'disabled'})});
  });
  await page.goto('/');await expect(page.getByRole('heading',{name:'無法進入教學工作室'})).toBeVisible();
  await expect(page.getByRole('button',{name:'登出並更換帳號'})).toBeVisible();

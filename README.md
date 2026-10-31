@@ -33,3 +33,7 @@ npm run build
 ## Google 登入（保留帳密）
 
 請見 [Google 登入設定與測試](Google登入設定與測試.md)。預設關閉新介面；完成 Provider、身分核對及網域設定後，設定 VITE_GOOGLE_AUTH_ENABLED=true 並重新建置。不需要資料遷移。
+
+## Google 自動建立帳號與帳號管理
+
+目前登入規則以 [帳號管理設定與測試](帳號管理設定與測試.md) 為準：Google 直接登入、自動加入共用工作室，只有既有管理員可停用／恢復帳號。舊 Google 手動綁定指南供歷史參考。

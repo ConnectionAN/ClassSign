@@ -10,6 +10,7 @@ async function setup(page:Page,makeup=false){
  });
  await page.route('https://classsign-test.invalid/**',async route=>{
   const url=new URL(route.request().url());let result:any=[];
+  if(url.pathname.endsWith('/rpc/account_action'))result={user_id:'teacher',is_admin:false,disabled:false};
   if(url.pathname.endsWith('/teacher_access'))result={user_id:'teacher'};
   if(url.pathname.endsWith('/students'))result=[{id:sid,name:'測試學生',fee:1200,active:1,created:'2026-10-01'}];
   if(url.pathname.endsWith('/lessons'))result=lessons;
