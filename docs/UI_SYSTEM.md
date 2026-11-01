@@ -73,3 +73,8 @@
 manifest 指定 192／512 PNG 與獨立 maskable PNG；不再以綠底音符當正式圖示。更新後瀏覽器分頁及已安裝 PWA 可能需重新載入或等待平台更新圖示快取，不能僅憑網站部署宣稱每台已安裝裝置已更新。
 
 需要重製時，以 Python + Pillow 執行 `python scripts/generate-brand-icons.py`。產物納入儲存庫，正常前端建置不需要 Python。不得改用繪製音符、字型或 AI 提案替代原圖。
+
+
+## 左側導覽圖示
+
+NavigationIcon 使用同一套 24×24 viewBox、18px 顯示尺寸、1.8px 圓角描邊 SVG，以 currentColor 跟隨選取狀態。日週課表＝月曆、學生＝人員、報表＝圖表、學費袋＝錢包、帳號＝身分卡。圖示 aria-hidden，不加入重複可存取名稱；按鈕文字、事件與鍵盤焦點保留。不得再以 Unicode 方塊／文字符號代替導覽圖示。

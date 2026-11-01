@@ -30,7 +30,8 @@
  .brand small {font-size:8px;letter-spacing:.9px;margin-top:3px}
  .app>aside {width:232px;padding:72px 20px 24px;background:#fff;border-right:1px solid var(--line)}
  .aside-title {margin:38px 12px 14px;letter-spacing:1px;font-size:11px}
- .nav {padding:13px 14px;margin-bottom:7px;border-radius:12px;font-size:13px;color:#77717B;font-weight:500}
+ .nav {display:flex;align-items:center;gap:12px;padding:13px 14px;margin-bottom:7px;border-radius:12px;font-size:13px;color:#77717B;font-weight:500}
+ .ui-nav-icon {display:block;flex-shrink:0}
  .nav.active {font-weight:700;box-shadow:inset 3px 0 var(--brand)}
  main {margin-left:232px;padding:0 32px 32px;overflow-anchor:none}
  .account-bar {margin-left:232px;min-height:62px;padding:10px 32px;color:var(--muted);font-size:12px;display:flex;align-items:center;gap:12px;justify-content:flex-end}
