@@ -1,0 +1,2 @@
+# Real React CSV baseline
+Captured from main 49ebc3506eb91069562592d5bc52dc68892968ee before this change, using tests/ui/report-fixture.ts and a fixed 2026-10-31 clock. Chromium and WebKit produced byte-identical CSVs. Five files correspond to overview, bags, receipts, courses and materials. Preserve UTF-8 BOM and CRLF. Screen/print formatting and the display-only material quantity column must not change CSV fields, ordering, formula escaping, amounts or scope.

@@ -1,0 +1,1 @@
+import {defineConfig} from '@playwright/test';import base from './playwright.config';export default defineConfig({...base,testMatch:'report-completion.spec.ts',projects:[{name:'chromium',use:{browserName:'chromium'}},{name:'webkit',use:{browserName:'webkit'}}],reporter:[['list'],['json',{outputFile:'artifacts/completion/results.json'}]]});
