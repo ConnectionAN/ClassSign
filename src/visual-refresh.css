@@ -276,8 +276,9 @@
  .mobile-student-tabs {margin:0 0 6px;gap:5px;padding:6px;background:#F4F2F6;border-radius:11px;scrollbar-width:none;position:static}
  .mobile-student-tabs button {font-size:11px;padding:9px 10px;min-height:36px;border:0;background:none;border-radius:8px}
  .mobile-navigation {padding:8px 12px calc(8px + env(safe-area-inset-bottom));box-shadow:0 -6px 24px #302B3305;border-color:var(--line)}
- .mobile-navigation button {font-size:10px;color:#A197A7;min-height:54px}
+ .mobile-navigation button {font-size:10px;color:#655D69;min-height:54px}
  .mobile-navigation button span {font-size:20px;line-height:1.4;margin-bottom:2px}
+ .mobile-navigation .ui-nav-icon {width:22px;height:22px;margin:0 auto 5px}
  .mobile-navigation button[aria-current=page] {color:var(--brand-ink);border-radius:12px}
  .mobile-app .dialog {border-radius:0;padding:22px 20px calc(24px + env(safe-area-inset-bottom))}
  .mobile-app .invoice-list .lesson,.mobile-app .invoice-print,.mobile-report-card {background:var(--field)}
