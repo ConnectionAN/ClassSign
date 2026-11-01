@@ -1,0 +1,79 @@
+/* ClassSign Visual Refresh v1.4 — paint only; layout remains in style.css/mobile.css.
+ * Shared specification: docs/UI_SYSTEM.md and docs/UI_LAYOUTS.md.
+ * --green is the legacy primary-action hook, retained for existing selectors.
+ */
+@media screen {
+ :root {
+  --brand:#CD76AC;
+  --brand-soft:#F9EDF4;
+  --brand-ink:#67364F;
+  --ink:#302B33;
+  --muted:#69616B;
+  --line:#E5DAE2;
+  --paper:#FCF9FB;
+  --green:var(--brand);
+  --surface:#FFFFFF;
+  --field:#FFFCFE;
+  --success-bg:#EAF3EE;
+  --success-ink:#285A43;
+  --warning-bg:#FFF3E4;
+  --warning-ink:#79501E;
+  --disabled-bg:#F1EFF2;
+  --disabled-ink:#69616B;
+ }
+ body {color:var(--ink)}
+ button {background:var(--surface);color:var(--ink)}
+ button:hover:not(:disabled) {filter:none;background:var(--brand-soft)}
+ button:active:not(:disabled) {box-shadow:inset 0 0 0 2px var(--brand-ink)}
+ button:disabled {opacity:1;color:var(--disabled-ink);background:var(--disabled-bg);border-color:var(--line)}
+ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,a:focus-visible,summary:focus-visible {outline:3px solid var(--brand-ink);outline-offset:2px}
+ input,select,textarea {background:var(--field);color:var(--ink)}
+ input::placeholder,textarea::placeholder {color:var(--muted);opacity:1}
+ input[type=checkbox] {accent-color:var(--brand-ink)}
+ .primary,.schedule button[aria-pressed=true],.mobile-student-tabs [aria-pressed=true],.mobile-sign-steps [aria-pressed=true] {background:var(--brand);border-color:var(--brand);color:var(--ink);font-weight:600}
+ .primary:hover:not(:disabled),.schedule button[aria-pressed=true]:hover:not(:disabled),.mobile-student-tabs [aria-pressed=true]:hover:not(:disabled),.mobile-sign-steps [aria-pressed=true]:hover:not(:disabled) {background:var(--brand);box-shadow:inset 0 0 0 1px var(--brand-ink)}
+ .primary:disabled {background:var(--disabled-bg);border-color:var(--line);color:var(--disabled-ink)}
+ .nav.active,.student.chosen,.mobile-navigation button[aria-current=page] {background:var(--brand-soft);color:var(--brand-ink)}
+ .student.chosen {border-color:var(--brand)}
+ .brand small,.aside-title,.eyebrow,footer,.count {color:var(--muted)}
+ .logo {background:transparent;border-radius:0;object-fit:contain}
+ .avatar,.badge {background:var(--brand-soft);color:var(--brand-ink)}
+ .metrics,.folders,.records {box-shadow:0 3px 16px #67364F06}
+ .metrics strong,.stat-total strong {color:var(--ink);font-variant-numeric:tabular-nums}
+ .stat-total {background:var(--brand-soft)}
+ .lesson {border-top-color:var(--line)}
+ .empty,.empty span,.big h2 {color:var(--muted)}
+ .calendar>section {background:var(--surface)}
+ .schedule-card {background:var(--brand-soft);border-left-color:var(--brand);color:var(--ink)}
+ .schedule-card.leave {background:var(--warning-bg);border-left-color:#B47A33;color:var(--warning-ink)}
+ .schedule-card.signed {background:var(--success-bg);border-left-color:#397557;color:var(--success-ink)}
+ .schedule-card.cancelled {background:var(--disabled-bg);border-left-color:#8F8792;color:var(--disabled-ink)}
+ .schedule-card.leave:hover:not(:disabled) {background:var(--warning-bg)}
+ .schedule-card.signed:hover:not(:disabled) {background:var(--success-bg)}
+ .schedule-card.cancelled:hover:not(:disabled) {background:var(--disabled-bg)}
+ .alert {background:var(--warning-bg);color:var(--warning-ink)}
+ .overlay {background:#302B3370}
+ .dialog {box-shadow:0 20px 80px #302B3326}
+ .signature {background:var(--field)}
+ .signature canvas {background:linear-gradient(transparent 95%,var(--line) 95%)}
+ .billing-materials,.invoice-print {border-color:var(--line)}
+ .billing td small {color:var(--muted)}
+ .report-definition {background:var(--brand-soft);color:var(--brand-ink)}
+ .login {background-color:var(--paper)}
+ .login .dialog {position:relative}
+ .login-brand {position:absolute;right:14px;top:14px;width:32px;height:32px;object-fit:contain}
+ .login .eyebrow {letter-spacing:1.6px}
+ .mobile-app header {background:url('/brand/jing-le-original-avatar.jpg') no-repeat right center;background-size:32px 32px}
+ .mobile-app .invoice-list .lesson,.mobile-app .invoice-print,.mobile-report-card {background:var(--field)}
+}
+/* Original vertical artwork remains fully visible alongside the centered login
+ * card only where both fit, without moving or resizing the existing form. */
+@media screen and (min-width:1280px) {
+ .login {background-image:url('/brand/jing-le-original-card.jpg');background-repeat:no-repeat;background-position:right 24px center;background-size:auto min(70dvh,600px)}
+}
+@media screen and (min-width:761px) {
+ .mobile-app header {background-image:none}
+}
+@media print {
+ .login-brand {display:none}
+}
