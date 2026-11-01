@@ -276,8 +276,9 @@
  .mobile-student-tabs {margin:0 0 6px;gap:5px;padding:6px;background:#F4F2F6;border-radius:11px;scrollbar-width:none;position:static}
  .mobile-student-tabs button {font-size:11px;padding:9px 10px;min-height:36px;border:0;background:none;border-radius:8px}
  .mobile-navigation {padding:8px 12px calc(8px + env(safe-area-inset-bottom));box-shadow:0 -6px 24px #302B3305;border-color:var(--line)}
- .mobile-navigation button {font-size:10px;color:#A197A7;min-height:54px}
+ .mobile-navigation button {font-size:10px;color:#655D69;min-height:54px}
  .mobile-navigation button span {font-size:20px;line-height:1.4;margin-bottom:2px}
+ .mobile-navigation .ui-nav-icon {width:22px;height:22px;margin:0 auto 5px}
  .mobile-navigation button[aria-current=page] {color:var(--brand-ink);border-radius:12px}
  .mobile-app .dialog {border-radius:0;padding:22px 20px calc(24px + env(safe-area-inset-bottom))}
  .mobile-app .invoice-list .lesson,.mobile-app .invoice-print,.mobile-report-card {background:var(--field)}
@@ -290,3 +291,123 @@
 }
 @media (prefers-reduced-motion:reduce) {button {transition:none}}
 @media print {.login-brand {display:none}}
+/* v1.4.2 Phase 1: scoped to billing, all financial expressions stay in Billing. */
+@media screen {
+ .billing {--muted:#655D69;color:#302B33}
+ .billing .eyebrow {color:#655D69;font-size:11px;letter-spacing:1.2px}
+ .billing .ui-section-heading {padding-bottom:20px;border-bottom:1px solid var(--line)}
+ .billing .ui-section-heading .muted {font-size:13px;max-width:680px}
+ .billing .billing-create {padding:20px;background:#FAF6F9;border:1px solid #E9DAE4;border-radius:14px;margin:22px 0}
+ .billing label {font-size:13px;font-weight:600;color:#554B59}
+ .billing .primary {background:var(--brand);color:#30202B;border-color:#B25C92;box-shadow:none}
+ .billing .primary:hover:not(:disabled) {background:#D98DBB;color:#30202B}
+ .billing .primary:disabled {background:#F1F1F5;color:#655D69;border-color:#D9D3DC}
+ .billing input,.billing select,.billing textarea {border-color:#AAA1AF;font-size:15px}
+ .billing input::placeholder {color:#716575}
+ .billing .invoice-list {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:20px 0 28px}
+ .billing .invoice-card {display:flex;flex-direction:column;gap:20px;align-items:stretch;padding:18px;border:1px solid #DDD6E0;border-radius:14px;background:#FFF;min-width:0;margin:0}
+ .billing .invoice-card:hover {background:#FCF7FA}
+ .billing .invoice-card[aria-pressed=true] {border:2px solid #985378;padding:17px;background:#FCF6FA;box-shadow:0 3px 12px #67364F0D}
+ .invoice-card-top {display:flex;align-items:flex-start;justify-content:space-between;gap:8px;flex-wrap:wrap}
+ .billing .ui-identity .avatar {color:#67364F;background:#F9EDF4}
+ .billing .ui-identity strong {font-size:15px}
+ .billing .ui-identity small {color:#655D69;font-size:12px}
+ .billing .ui-status {font-size:12px;padding:4px 9px;font-weight:700}
+ .billing .ui-status-draft {background:#F1EEF5;color:#62516E}
+ .billing .ui-status-partial {background:#FFF1DA;color:#79511E}
+ .billing .ui-status-cancelled {background:#EEECEF;color:#605A65}
+ .billing .ui-status-signed {color:#286441}
+ .billing .invoice-card-amount {display:flex;gap:24px;align-items:center;border-top:1px solid #E9E1E8;padding-top:13px;font-size:12px;color:#655D69}
+ .invoice-card-amount strong {display:block;font-size:19px!important;color:#302B33;font-weight:700!important;line-height:1.6;font-variant-numeric:tabular-nums}
+ .invoice-card-amount>span:nth-child(2) strong {font-size:15px!important;color:#655D69}
+ .invoice-card-arrow {margin-left:auto;color:#67364F;font-size:22px}
+ .billing .invoice-print {padding:28px;margin:0;border:1px solid #DFD6E0;border-radius:18px;background:white;min-width:0}
+ .invoice-heading {align-items:flex-start;padding-bottom:24px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+ .invoice-heading .eyebrow {margin-bottom:12px}
+ .invoice-heading-actions {display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+ .billing .invoice-id {display:block;color:#655D69;overflow-wrap:anywhere;font-size:11px;margin-top:12px}
+ .billing-summary {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:24px 0 14px}
+ .billing-summary .ui-metric {padding:18px 16px;background:#F8F7FA;border:1px solid #E6E0E9;border-radius:12px;min-width:0}
+ .billing-summary .ui-metric:last-child {background:#F9EDF4;border-color:#E8CDDF}
+ .billing-summary .ui-metric-label {display:block;color:#655D69;font-size:13px;padding-right:24px}
+ .billing-summary .ui-metric-icon {top:15px;right:12px;width:25px;height:25px;font-size:16px;color:#67364F;background:transparent}
+ .billing-summary strong {display:block;font-size:28px;font-weight:700;font-variant-numeric:tabular-nums;margin-top:12px;line-height:1.4;overflow-wrap:anywhere}
+ .billing-summary .ui-metric>small {font-size:12px;color:#655D69;display:block;margin-top:8px}
+ .billing-balances {display:flex;flex-wrap:wrap;gap:10px 28px;padding:4px 0 20px;border-bottom:1px solid var(--line);font-size:13px;color:#655D69}
+ .billing-balances strong {color:#302B33;margin-left:8px;font-variant-numeric:tabular-nums}
+ .billing-detail-title {display:flex;justify-content:space-between;gap:10px;align-items:center;font-size:16px}
+ .billing-detail-title span {font-size:12px;font-weight:400;color:#655D69}
+ .billing table {table-layout:fixed;margin-bottom:18px}
+ .billing th {color:#655D69;background:#F8F7FA;font-size:12px;font-weight:600}
+ .billing td {font-size:14px;overflow-wrap:anywhere;line-height:1.8;padding:18px 12px}
+ .billing th:last-child,.billing td:last-child {width:34%;font-variant-numeric:tabular-nums}
+ .billing td small {color:#655D69;font-size:12px;margin-top:4px}
+ .billing td .text {display:block;margin:5px 0 0 auto;color:#7E355E;text-decoration:underline;min-height:36px}
+ .billing .actions {justify-content:flex-end;flex-wrap:wrap;margin:20px 0 26px;padding-bottom:22px;border-bottom:1px solid var(--line)}
+ .billing .actions button {font-size:13px;min-height:44px;padding:11px 16px}
+ .billing .custom-fee-form,.billing .invoice-print>form {padding:22px;background:#FAF6F9;border:1px solid #E5D7E0;border-radius:14px;margin:24px 0}
+ .billing .invoice-print>form h3,.billing .custom-fee-form h3 {margin-top:0;font-size:16px}
+ .billing .invoice-print>form>.primary {min-width:160px}
+ .billing .payment-record {padding:16px 0;border-color:var(--line)}
+ .billing .payment-record strong {font-size:19px;font-weight:700}
+ .billing .payment-record small {color:#655D69;font-size:12px;overflow-wrap:anywhere}
+ .billing-empty,.billing-payment-empty {padding:20px;background:#F8F7FA;border-radius:12px;color:#655D69;font-size:13px}
+ .billing details {border-top:1px solid var(--line);padding-top:4px}
+ .billing summary {color:#655D69;min-height:44px;font-size:13px}
+ .billing button {min-height:44px}
+}
+@media screen and (min-width:768px) and (max-width:1279px) {
+ .billing .invoice-list {grid-template-columns:repeat(2,minmax(0,1fr))}
+ .billing-summary {gap:8px}.billing-summary .ui-metric {padding:16px 12px}
+ .billing-summary strong {font-size:23px}
+}
+@media screen and (width < 768px) {
+ .mobile-app .billing.records {padding:20px 14px}
+ .billing .billing-create {padding:16px;margin:20px 0}
+ .mobile-app .billing .invoice-list {grid-template-columns:1fr;gap:10px}
+ .mobile-app .billing .invoice-card {margin:0;padding:16px;gap:14px}
+ .mobile-app .billing .invoice-card[aria-pressed=true] {padding:15px}
+ .mobile-app .billing .invoice-print {padding:18px 12px;margin:0}
+ .billing .invoice-heading {gap:16px;padding-bottom:18px}
+ .billing .invoice-heading .ui-identity-large .ui-identity-name {font-size:23px}
+ .billing .invoice-heading .avatar {width:44px;height:44px;border-radius:12px}
+ .billing .invoice-heading-actions {width:100%;justify-content:space-between}
+ .billing-summary {grid-template-columns:1fr 1fr;gap:8px;margin-top:18px}
+ .billing-summary .ui-metric {padding:14px 10px}
+ .billing-summary .ui-metric:last-child {grid-column:1/-1}
+ .billing-summary strong {font-size:24px}
+ .billing-summary .ui-metric-label {font-size:12px;padding:0}
+ .billing-summary .ui-metric-icon {display:none}
+ .billing-balances {display:grid;gap:8px;font-size:12px}
+ .billing-detail-title {align-items:flex-start;flex-direction:column;font-size:15px;margin-top:24px}
+ .mobile-app .billing td,.mobile-app .billing th {padding:12px 6px;font-size:12px}
+ .billing th:last-child,.billing td:last-child {width:39%}
+ .billing .actions {display:grid;grid-template-columns:1fr}
+ .billing .actions button {width:100%}
+ .billing .custom-fee-form,.billing .invoice-print>form {padding:16px 12px}
+ .billing .invoice-print>form>.primary {width:100%}
+ .billing input,.billing select {font-size:16px}
+}
+@media print {
+ .billing-summary {display:flex;gap:24px;margin:18px 0}
+ .billing-summary .ui-metric-icon {display:none}
+ .billing-summary .ui-metric-label,.billing-summary .ui-metric>strong,.billing-summary .ui-metric>small {display:block}
+ .billing-summary .ui-metric>strong {font-size:18pt}
+ .invoice-heading .avatar {display:none}
+ .invoice-heading .ui-identity-name {font-size:20pt;font-weight:bold}
+ .invoice-id {overflow-wrap:anywhere;display:block}
+ .billing-balances {margin:12px 0}
+ .billing-balances>span {margin-right:20px}
+}
+/* Native WebKit month/date fields must shrink inside flex/grid tracks. */
+@media screen {
+ input[type="month"],input[type="date"] {appearance:none;-webkit-appearance:none;box-sizing:border-box;width:100%;min-width:0;max-width:100%;min-inline-size:0;max-inline-size:100%;min-height:44px}
+ input[type="month"]::-webkit-date-and-time-value,input[type="date"]::-webkit-date-and-time-value {text-align:left;min-width:0;min-height:1.5em}
+ input[type="month"]::-webkit-datetime-edit,input[type="date"]::-webkit-datetime-edit {min-width:0;padding:0}
+ .billing .billing-create {display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;align-items:end}
+ .billing .billing-create label {min-width:0;max-width:100%}
+}
+@media screen and (width < 768px) {
+ .mobile-app .billing .billing-create {grid-template-columns:minmax(0,1fr)}
+ .mobile-app .filters>label {min-width:0;max-width:100%}
+}

@@ -1,7 +1,8 @@
 import type {ButtonHTMLAttributes,ReactNode} from 'react';
 
-export type NavigationIconName='calendar'|'students'|'reports'|'wallet'|'accounts';
+export type NavigationIconName='calendar'|'students'|'reports'|'wallet'|'accounts'|'more';
 const navigationIcons:Record<NavigationIconName,ReactNode>={
+ more:<><path d="M4 6h16M4 12h16M4 18h16"/></>,
  calendar:<><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M7 3v4m10-4v4M3 11h18M7 15h2m6 0h2m-10 3h2"/></>,
  students:<><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2m20 0v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/><circle cx="9" cy="7" r="4"/></>,
  reports:<><path d="M4 3v16a2 2 0 0 0 2 2h15M9 16v-5m5 5V7m5 9V4"/></>,

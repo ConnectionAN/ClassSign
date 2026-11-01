@@ -15,8 +15,6 @@ for(const width of [768,1024,1280,1440])test('baseline '+width,async({page})=>{
  await page.goto('/');await expect(page.getByText('09:00–10:00')).toBeVisible();
  for(const [key,label] of [['schedule','日／週課表'],['students','學生資料夾'],['billing','學費袋與收款'],['stats','統計報表'],['accounts','帳號管理']]){
  await page.getByRole('button',{name:new RegExp(label)}).click();if(key==='students'){await page.getByRole('button',{name:/測試學生.*堂/}).click();await expect(page.getByRole('textbox',{name:'學生備註'})).toBeVisible();await expect(page.getByText('表定上課時間',{exact:true})).toBeVisible();await expect(page.getByText('讀取帳務資料…',{exact:true})).toHaveCount(0);}if(key==='stats')await expect(page.getByRole('heading',{name:'營運總覽',exact:true})).toBeVisible();
- await page.mouse.move(0,0);const screenshot=await page.screenshot({path:`../../outputs/${process.env.BASELINE_PHASE||'after'}/${width}-${key}.png`,fullPage:true,animations:'disabled'});if(process.env.CLASS_SIGN_VISUAL_BASELINE==='1')expect(screenshot).toMatchSnapshot(width+'-'+key+'.png',{threshold:0.01,maxDiffPixels:0});
+ await page.mouse.move(0,0);const screenshot=await page.screenshot({path:`artifacts/${process.env.BASELINE_PHASE||'after'}/${width}-${key}.png`,fullPage:true,animations:'disabled'});if(process.env.CLASS_SIGN_VISUAL_BASELINE==='1')expect(screenshot).toMatchSnapshot(width+'-'+key+'.png',{threshold:0.01,maxDiffPixels:0});
  }
 });
-
-
