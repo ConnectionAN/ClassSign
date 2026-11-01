@@ -13,12 +13,14 @@ for(const width of [320,375,390,430,768,1024,1280,1440])test('Phase 1 billing re
  expect(bounds.left).toBeGreaterThanOrEqual(bounds.parentLeft-1);expect(bounds.right).toBeLessThanOrEqual(bounds.parentRight+1);
  if(width<768)await expect(page.locator('.mobile-navigation svg')).toHaveCount(4);
  for(const [key,name] of [['draft','陳以安'],['issued','林沐晴'],['partial','許品言'],['paid','張予樂'],['void','吳若晴']]){
+  if(key==='void')await page.getByRole('group',{name:'學費袋分類'}).getByRole('button',{name:/作廢紀錄/}).click();
   await page.locator('.invoice-list button').filter({hasText:name}).click();
   await expect(page.locator('.invoice-print')).toContainText(name);
   await page.locator('.invoice-print').scrollIntoViewIfNeeded();await page.mouse.move(0,0);
   await page.screenshot({path:path.join(dir,`${width}-${key}.png`),fullPage:true,animations:'disabled'});
   if(phase==='after')expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
  }
+ await page.getByRole('group',{name:'學費袋分類'}).getByRole('button',{name:/有效學費袋/}).click();
  await page.locator('.invoice-list button').filter({hasText:'許品言'}).click();
  if(phase==='after'){
   const card=page.locator('.invoice-list button').filter({hasText:'許品言'});await card.focus();await expect(card).toBeFocused();await page.keyboard.press('Enter');await expect(card).toHaveAttribute('aria-pressed','true');
