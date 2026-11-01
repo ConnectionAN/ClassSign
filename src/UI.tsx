@@ -49,3 +49,11 @@ export function LessonCard({time,name,status,label,children,onClick}:{time:strin
 export function CalendarDayHeading({date,weekday,count,today}:{date:string;weekday:string;count:number;today:boolean}){
  return <div className={`ui-day-heading ${today?'is-today':''}`}><h3><span>{weekday}</span><strong>{date}</strong></h3><span className="ui-day-count">{count} 堂</span></div>;
 }
+
+/* Report display components receive ready-to-render values only. */
+export function ReportMetricCard({label,value,description}:{label:string;value:ReactNode;description?:string}){
+ return <div className="report-metric"><span>{label}</span><strong>{value}</strong>{description&&<small>{description}</small>}</div>;
+}
+export function ReportSectionHeading({title,description}:{title:string;description?:string}){
+ return <div className="report-section-heading"><h2>{title}</h2>{description&&<p>{description}</p>}</div>;
+}
