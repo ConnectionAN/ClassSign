@@ -57,3 +57,11 @@ export function ReportMetricCard({label,value,description}:{label:string;value:R
 export function ReportSectionHeading({title,description}:{title:string;description?:string}){
  return <div className="report-section-heading"><h2>{title}</h2>{description&&<p>{description}</p>}</div>;
 }
+
+// Report graphics receive display-ready values; requests and ledger rules stay with callers.
+export function ReportCollectionBar({label,percentage,received,outstanding,note}:{label:string;percentage:number|null;received:string;outstanding:string;note:string}){
+ return <section className="report-chart report-collection no-print" aria-label={label}><div className="report-chart-heading"><h3>{label}</h3><strong>{percentage===null?'不適用':`${percentage.toFixed(1)}% 已配置`}</strong></div>{percentage!==null&&<div role="meter" aria-label="已配置收款占正式應收比例" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.min(100,Math.max(0,percentage))} aria-valuetext={`${percentage.toFixed(1)}% 已配置`} className="report-track"><span style={{width:`${Math.min(100,Math.max(0,percentage))}%`}}/></div>}<div className="report-chart-legend"><span>已配置 {received}</span><span>尚未收款 {outstanding}</span></div><p>{note}</p></section>;
+}
+export function ReportBreakdown({title,items,note}:{title:string;items:{label:string;value:string;width:number|null}[];note:string}){
+ return <section className="report-chart no-print" aria-label={title}><h3>{title}</h3><ul>{items.map(item=><li key={item.label}><div className="report-chart-heading"><span>{item.label}</span><strong>{item.value}</strong></div>{item.width!==null&&<div className="report-track" aria-hidden="true"><span style={{width:`${item.width}%`}}/></div>}</li>)}</ul><p>{note}</p></section>;
+}

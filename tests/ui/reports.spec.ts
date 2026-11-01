@@ -59,8 +59,8 @@ test('missing migration shows an error rather than zero financial totals',async(
 test('advance tuition appears in November overview, receipts and CSV while preserving October payment date',async({page})=>{
  await setup(page,false,true);
  const metric=page.locator('.metrics>div').filter({hasText:'本期實收淨額（學費袋月份）'});
- await expect(metric.locator('strong')).toHaveText('$0');
- await page.getByLabel('基準月份').fill('2026-11');await expect(metric.locator('strong')).toHaveText('$2,850');
+ await expect(metric.locator('strong')).toHaveText('NT$0');
+ await page.getByLabel('基準月份').fill('2026-11');await expect(metric.locator('strong')).toHaveText('NT$2,850');
  const download=page.waitForEvent('download');await page.getByRole('button',{name:'匯出 CSV'}).click();const file=await download;const csv=readFileSync((await file.path())!,'utf8');expect(csv).toContain('本期實收淨額（學費袋月份）');expect(csv).toContain('2850');
  await page.getByRole('tab',{name:'實際收款報表'}).click();await expect(page.getByRole('cell',{name:'2026-10-31'})).toBeVisible();await expect(page.getByRole('cell',{name:'2026-11',exact:true})).toBeVisible();
  await page.emulateMedia({media:'print'});await expect(page.locator('.report-definition')).toContainText('不依付款日期歸月');await page.emulateMedia({media:'screen'});
@@ -84,6 +84,7 @@ for(const width of [390,1180])test('void bags are absent from report screen, CSV
  await page.getByRole('tab',{name:'實際收款報表',exact:true}).click();
  await expect(page.locator('.report-print')).not.toContainText('作廢收款不可顯示');
  await page.getByRole('tab',{name:'學費袋報表',exact:true}).click();
+ if(width<768)await page.locator('.mobile-report-details summary').click();
  await page.getByRole('button',{name:'開啟學費袋',exact:true}).click();
  await expect(page.locator('.invoice-print')).toContainText('測試學生');
  await expect(page.locator('.invoice-print')).not.toContainText('作廢專用姓名');

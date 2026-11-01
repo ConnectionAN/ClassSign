@@ -1,3 +1,5 @@
+> 歷史紀錄：PR #19已依使用者授權發布。最新補齊規格、測試與人工驗收待辦見 [REPORTS_PHASE2_COMPLETION.md](REPORTS_PHASE2_COMPLETION.md)。
+
 # Visual Refresh v1.4.2 Phase 2
 
 Base main: dcbeb71d0d5c4b3c41bbc5216f1c4f2090c5bfd7 (verified 2026-11-01).
