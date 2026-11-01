@@ -1,12 +1,17 @@
 import {test,expect} from '@playwright/test';
 import {readFileSync} from 'node:fs';
 const student={id:'s',name:'測試學生',fee:800,active:1};
-async function setup(page:any,fail=false,advance=false){
+async function setup(page:any,fail=false,advance=false,withVoid=false){
  await page.clock.install({time:new Date('2026-10-31T02:00:00Z')});
  await page.addInitScript(()=>{const payload=btoa(JSON.stringify({sub:'teacher',exp:2000000000,role:'authenticated'}));localStorage.setItem('sb-classsign-test-auth-token',JSON.stringify({access_token:'eyJhbGciOiJIUzI1NiJ9.'+payload+'.test',refresh_token:'test',expires_at:2000000000,token_type:'bearer',user:{id:'teacher',email:'teacher@example.com',app_metadata:{},user_metadata:{},aud:'authenticated'}}))});
  const invoice={id:'v',student:'s',student_name:'測試學生',month:'2026-10-01',state:'issued',total:3200,paid:2000};
  const data={generated_at:'2026-10-31T02:00:00Z',students:[student],invoices:[invoice],items:[{id:'item',invoice:'v',amount:3200,posted:true,kind:'tuition'}],payments:[{id:'p',invoice:'v',day:'2026-10-03',amount:2000,method:'transfer',reverses:null,notes:'=formula'}],materials:[{id:'m',student:'s',name:'教本',purchased:'2026-10-20',quantity:1,unit_price:350,cancelled:false}],adjustments:[],lessons:[{id:'l',student:'s',day:'2026-10-05',fee:800,session:null,voided:null}],sessions:[],pending:[]};
  if(advance){invoice.month='2026-11-01';invoice.total=2850;invoice.paid=2850;data.items[0].amount=2850;data.payments[0].amount=2850;data.payments[0].day='2026-10-31'}
+ if(withVoid){
+  data.invoices.unshift({...invoice,id:'void-bag',student_name:'作廢專用姓名',state:'void'});
+  data.items.push({...data.items[0],id:'void-item',invoice:'void-bag',amount:99999});
+  data.payments.push({...data.payments[0],id:'void-payment',invoice:'void-bag',amount:99999,notes:'作廢收款不可顯示'});
+ }
  const queries:any[]=[];
  await page.route('https://classsign-test.invalid/**',async(route:any)=>{
   const path=new URL(route.request().url()).pathname;let result:any=[];
@@ -22,7 +27,7 @@ async function setup(page:any,fail=false,advance=false){
   }
   await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(result)});
  });
- await page.goto('/');await page.getByRole('button',{name:/統計報表/}).click();
+ await page.goto('/');if((page.viewportSize()?.width||1180)>=768)await page.getByRole('button',{name:/統計報表/}).click();
  return queries;
 }
 test('five reports, separate metrics, period filters, CSV, print and invoice navigation',async({page})=>{
@@ -60,4 +65,26 @@ test('advance tuition appears in November overview, receipts and CSV while prese
  await page.getByRole('tab',{name:'實際收款報表'}).click();await expect(page.getByRole('cell',{name:'2026-10-31'})).toBeVisible();await expect(page.getByRole('cell',{name:'2026-11',exact:true})).toBeVisible();
  await page.emulateMedia({media:'print'});await expect(page.locator('.report-definition')).toContainText('不依付款日期歸月');await page.emulateMedia({media:'screen'});
  await page.getByLabel('基準月份').fill('2026-10');await expect(page.getByText('此篩選條件沒有紀錄。')).toBeVisible();
+});
+
+for(const width of [390,1180])test('void bags are absent from report screen, CSV and print '+width,async({page})=>{
+ await page.setViewportSize({width,height:900});
+ await page.addInitScript(()=>sessionStorage.setItem('classsign.page.teacher','stats'));
+ await setup(page,false,false,true);
+ await page.getByRole('tab',{name:'學費袋報表',exact:true}).click();
+ if(width<768)await page.getByText('篩選、匯出與列印',{exact:true}).click();
+ await expect(page.getByLabel('收費狀態').locator('option[value=void]')).toHaveCount(0);
+ await expect(page.locator('.report-print')).not.toContainText('作廢專用姓名');
+ await expect(page.locator('.report-print')).toContainText('測試學生');
+ const download=page.waitForEvent('download');await page.getByRole('button',{name:'匯出 CSV'}).click();
+ const file=await download;const csv=readFileSync((await file.path())!,'utf8');
+ expect(csv).not.toContain('作廢專用姓名');expect(csv).not.toContain('99999');expect(csv).toContain('測試學生');
+ await page.emulateMedia({media:'print'});await expect(page.locator('.report-table')).toBeVisible();
+ await expect(page.locator('.report-print')).not.toContainText('作廢專用姓名');await page.emulateMedia({media:'screen'});
+ await page.getByRole('tab',{name:'實際收款報表',exact:true}).click();
+ await expect(page.locator('.report-print')).not.toContainText('作廢收款不可顯示');
+ await page.getByRole('tab',{name:'學費袋報表',exact:true}).click();
+ await page.getByRole('button',{name:'開啟學費袋',exact:true}).click();
+ await expect(page.locator('.invoice-print')).toContainText('測試學生');
+ await expect(page.locator('.invoice-print')).not.toContainText('作廢專用姓名');
 });
