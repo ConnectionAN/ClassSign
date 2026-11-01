@@ -16,7 +16,7 @@ for(const width of [375,390,768,1024,1440])test('v141 visual workflow '+width,as
  await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(result)});});
 
 
- const phase=process.env.UI141_PHASE||'after';const dir=path.resolve('../../outputs/visual-v141',phase);fs.mkdirSync(dir,{recursive:true});
+ const phase=process.env.UI141_PHASE||'after';const dir=path.resolve('artifacts/visual-v141',phase);fs.mkdirSync(dir,{recursive:true});
  await page.goto('/');await expect(page.getByText('09:00–10:00')).toBeVisible();
  async function shot(key:string){await page.evaluate(()=>window.scrollTo(0,0));await page.mouse.move(0,0);await page.screenshot({path:path.join(dir,width+'-'+key+'.png'),animations:'disabled'});await page.screenshot({path:path.join(dir,width+'-'+key+'-full.png'),fullPage:true,animations:'disabled'});if(phase==='after')expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true)}
  await shot('schedule');await page.getByRole('button',{name:'日檢視',exact:true}).click();await shot('day');await page.getByRole('button',{name:'週檢視',exact:true}).click();await shot('week');
@@ -27,5 +27,5 @@ for(const width of [375,390,768,1024,1440])test('v141 visual workflow '+width,as
  if(phase==='after'){const primary=page.locator('.primary:not(:disabled)').first();await expect(primary).toHaveCSS('color','rgb(255, 255, 255)');await expect(primary).toHaveCSS('background-color','rgb(205, 118, 172)')}
 });
 for(const width of [375,390,768,1024,1440])test('v141 login '+width,async({page})=>{
- const phase=process.env.UI141_PHASE||'after';const dir=path.resolve('../../outputs/visual-v141',phase);fs.mkdirSync(dir,{recursive:true});await page.setViewportSize({width,height:width===768?1024:844});await page.goto('/');await expect(page.getByRole('button',{name:'使用帳密登入',exact:true})).toBeVisible();await page.screenshot({path:path.join(dir,width+'-login.png'),fullPage:true});if(phase==='after'){expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);await expect(page.locator('.login')).toHaveCSS('background-image','none');await expect(page.locator('.primary')).toHaveCSS('color','rgb(255, 255, 255)')}
+ const phase=process.env.UI141_PHASE||'after';const dir=path.resolve('artifacts/visual-v141',phase);fs.mkdirSync(dir,{recursive:true});await page.setViewportSize({width,height:width===768?1024:844});await page.goto('/');await expect(page.getByRole('button',{name:'使用帳密登入',exact:true})).toBeVisible();await page.screenshot({path:path.join(dir,width+'-login.png'),fullPage:true});if(phase==='after'){expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);await expect(page.locator('.login')).toHaveCSS('background-image','none');await expect(page.locator('.primary')).toHaveCSS('color','rgb(255, 255, 255)')}
 });
