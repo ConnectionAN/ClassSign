@@ -48,3 +48,13 @@ npm run dev -- --port 4185 --strictPort
 | 手機 390 | [Before](visual-v142/before-390.png) | [After](visual-v142/after-390.png) |
 | iPad 768 | [Before](visual-v142/before-768.png) | [After](visual-v142/after-768.png) |
 | 電腦 1440 | [Before](visual-v142/before-1440.png) | [After](visual-v142/after-1440.png) |
+
+## 2026-11-01 使用者確認發布及修正
+
+使用者要求修正後直接部署正式站，取代本文件前述的暫不發布限制；仍僅處理 Phase 1 與指定 UI 缺陷，未進入 Phase 2。
+
+- 手機底部導覽與學生摘要卡統一使用共用 SVG，移除人物／收費的文字符號。
+- 月份／日期欄位加上 WebKit appearance、min-width 與 inline-size 約束；學費袋產生表單改用可收縮 grid 軌道，避免 iPhone 原生欄位撐出卡片。
+- 新增 WebKit 測試配置。Chromium 完整 54 項通過，新增欄位邊界／SVG 斷言後八尺寸 Chromium 與 WebKit 各 8 項通過。WebKit 為 Windows 測試瀏覽器，非實際 iPhone。
+- 使用者授權清理正式測試帳務。先將 9 張學費袋及帳務相關資料備份至本機 artifacts/private（不進版控），再於交易內僅刪除明確核對的 2 張草稿與 6 張作廢，以及對應未過帳明細。這 8 張均無任何收款紀錄。保留 1 張正式學費袋及其 $2,850 收款；付款、教材、抵扣及稽核紀錄逐筆比對不變，未修改 schema、RLS、RPC 或 migration。
+- 「沖銷」保留原收款，另建一筆負額對應紀錄及原因；不實際執行銀行退款，也不刪除歷史。

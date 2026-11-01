@@ -399,3 +399,15 @@
  .billing-balances {margin:12px 0}
  .billing-balances>span {margin-right:20px}
 }
+/* Native WebKit month/date fields must shrink inside flex/grid tracks. */
+@media screen {
+ input[type="month"],input[type="date"] {appearance:none;-webkit-appearance:none;box-sizing:border-box;width:100%;min-width:0;max-width:100%;min-inline-size:0;max-inline-size:100%;min-height:44px}
+ input[type="month"]::-webkit-date-and-time-value,input[type="date"]::-webkit-date-and-time-value {text-align:left;min-width:0;min-height:1.5em}
+ input[type="month"]::-webkit-datetime-edit,input[type="date"]::-webkit-datetime-edit {min-width:0;padding:0}
+ .billing .billing-create {display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;align-items:end}
+ .billing .billing-create label {min-width:0;max-width:100%}
+}
+@media screen and (width < 768px) {
+ .mobile-app .billing .billing-create {grid-template-columns:minmax(0,1fr)}
+ .mobile-app .filters>label {min-width:0;max-width:100%}
+}
