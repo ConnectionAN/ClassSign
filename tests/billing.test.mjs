@@ -107,7 +107,7 @@ test('billing: immutable snapshots, materials, receipts, carry forward and autho
   const base=tuition.length*700,id=randomUUID();const custom={action:'custom_add',invoice,id,name:'10月未列帳學費',amount:1200,notes:'家長確認補登'};
   await bill(custom);await bill(custom);await draft(student,'2030-11-01');state=await list();
   assert.equal(state.items.filter(i=>i.invoice===invoice&&i.kind==='custom').length,1);assert.equal(state.invoices.find(v=>v.id===invoice).total,base+1200);
-  await assert.rejects(bill({...custom,id:randomUUID(),amount:-1}),/正整數/);
+  await assert.rejects(bill({...custom,id:randomUUID(),amount:0}),/範圍/);
   await bill({action:'custom_remove',invoice,id});await bill({action:'custom_remove',invoice,id});
   await rpc({action:'fee',student,fee:0});await draft(student,'2030-11-01');state=await list();assert.equal(state.invoices.find(v=>v.id===invoice).total,0);
   await rpc({action:'fee',student,fee:850});await draft(student,'2030-11-01');await bill({...custom,id:randomUUID(),name:'活動費',amount:900});
@@ -140,6 +140,48 @@ test('billing: immutable snapshots, materials, receipts, carry forward and autho
   state=await list();assert.equal(state.invoices.find(v=>v.id===invoice).student_name,'姓名已更正');assert.deepEqual(state.items.filter(i=>i.invoice===invoice),frozen);
   await assert.rejects(bill({action:'draft_item_remove',invoice,id:frozen[0].id}),/已開立/);
   assert.ok((await rows("select * from public.schedule_events where action='student_rename' and after_data->>'student'=$1",[student])).every(e=>e.actor===admin));
+ });
+ await t.test('signed custom deductions survive retries, recalculation, restore and issue without creating credit',async()=>{
+  await as(admin);await rpc({action:'student',name:'手動扣除測試',fee:800});
+  const student=(await rows("select id from public.students where name='手動扣除測試'"))[0].id;
+  const invoice=await draft(student,'2034-11-01');
+  const charge={action:'custom_add',invoice,id:randomUUID(),name:'本月課程費',amount:3200,notes:'測試'};await bill(charge);
+  const deduction={...charge,id:randomUUID(),name:'10月請假不補課扣除',amount:-800,notes:'系統啟用前已收款，確定不補課'};
+  await bill(deduction);await bill(deduction);await draft(student,'2034-11-01');
+  let state=await list();assert.equal(state.invoices.find(v=>v.id===invoice).total,2400);
+  assert.equal(state.items.filter(i=>i.id===deduction.id).length,1);assert.equal(state.adjustments.filter(a=>a.student===student).length,0);
+  const fp=state.invoices.find(v=>v.id===invoice).fingerprint;
+  for(const amount of [0,0.5,-0.5,100000001,-100000001,'1e3','-1e3'])await assert.rejects(bill({...deduction,id:randomUUID(),amount}));
+  await assert.rejects(bill({...deduction,id:randomUUID(),amount:-2401}),/不可為負數/);
+  await assert.rejects(bill({action:'draft_item_remove',invoice,id:charge.id}),/不可為負數/);
+  assert.equal((await list()).invoices.find(v=>v.id===invoice).fingerprint,fp);
+  await bill({action:'draft_item_remove',invoice,id:deduction.id});state=await list();assert.equal(state.invoices.find(v=>v.id===invoice).total,3200);
+  const ex=state.exclusions.find(e=>e.invoice===invoice&&e.snapshot.id===deduction.id);
+  await bill({action:'draft_item_restore',invoice,id:ex.id});await draft(student,'2034-11-01');
+  assert.equal((await list()).invoices.find(v=>v.id===invoice).total,2400);
+  const allOff={...deduction,id:randomUUID(),amount:-2400};await bill(allOff);assert.equal((await list()).invoices.find(v=>v.id===invoice).total,0);
+  await bill({action:'custom_remove',invoice,id:allOff.id});await issue(invoice);
+  state=await list();const frozen=state.items.filter(i=>i.invoice===invoice);assert.equal(frozen.find(i=>i.amount===-800).posted,true);
+  await assert.rejects(bill({...deduction,id:randomUUID()}),/只有草稿/);
+  await bill({action:'payment',invoice,id:randomUUID(),amount:2400,method:'cash',day:'2020-01-01'});
+  assert.equal((await list()).invoices.find(v=>v.id===invoice).paid,2400);assert.deepEqual((await list()).items.filter(i=>i.invoice===invoice),frozen);
+  assert.ok(state.audit.some(a=>a.action==='custom_add'&&Number(a.after_data.amount)===-800&&a.actor===admin));
+  await as(outsider);await assert.rejects(bill({...deduction,id:randomUUID()}),/停用|權限/);await as(admin);
+ });
+ await t.test('manual deduction reduces credit budget without changing ordinary leave entitlement',async()=>{
+  await as(admin);await rpc({action:'student',name:'一般抵扣相容性',fee:800});const student=(await rows("select id from public.students where name='一般抵扣相容性'"))[0].id;
+  await rpc({action:'slot',student,starts:'2033-10-01',ends:'2033-11-30',weekday:7,minute:60});
+  const original=await draft(student,'2033-10-01');await issue(original);const old=(await list()).invoices.find(v=>v.id===original);
+  await bill({action:'payment',invoice:original,id:randomUUID(),amount:old.total,method:'cash',day:'2020-01-01'});
+  const source=(await rows("select id from public.class_sessions where student=$1 and day between '2033-10-01' and '2033-10-31' order by day",[student]))[0].id;
+  await rpc({action:'leave',student,session:source,needsMakeup:false});
+  const current=await draft(student,'2033-11-01');let state=await list();const base=state.items.filter(i=>i.invoice===current&&i.kind==='tuition').reduce((n,i)=>n+Number(i.amount),0);
+  const id=randomUUID();await bill({action:'custom_add',invoice:current,id,name:'手動扣除',amount:-(base-400)});
+  state=await list();assert.equal(state.invoices.find(v=>v.id===current).total,0);
+  assert.equal(state.items.filter(i=>i.invoice===current&&i.kind==='credit').reduce((n,i)=>n+Number(i.amount),0),-400);
+  assert.equal(state.items.filter(i=>i.invoice===current&&i.kind==='reversal').length,0);
+  assert.equal(state.adjustments.filter(a=>a.student===student).reduce((n,a)=>n+Number(a.amount),0),800);
+  assert.equal(state.invoices.find(v=>v.id===original).total,old.total);assert.equal(state.invoices.find(v=>v.id===original).paid,old.total);
  });
  await t.test('unknown, suspended and anonymous callers cannot read or change billing',async()=>{
   await as(outsider);await assert.rejects(list(),/停用|權限/);assert.equal((await rows('select * from public.billing_invoices')).length,0);
