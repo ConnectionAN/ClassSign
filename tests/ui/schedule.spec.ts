@@ -1,8 +1,8 @@
 import {test,expect,type Page} from '@playwright/test';
 const sid='11111111-1111-4111-8111-111111111111',cid='22222222-2222-4222-8222-222222222222';
 const initial={id:cid,student:sid,slot:'weekly',original_day:'2026-10-31',day:'2026-10-31',minute:540,duration:60,estimated_fee:1000,status:'planned',needs_makeup:false,original:null};
-async function setup(page:Page,makeup=false){
- const calls:Record<string,any>[]=[];let sessions=[{...initial,original:makeup?'original-session':null}],lessons:Record<string,any>[]=[];
+async function setup(page:Page,makeup=false,legacyZero=false){
+ const calls:Record<string,any>[]=[];let sessions=[{...initial,estimated_fee:legacyZero?0:initial.estimated_fee,original:makeup?'original-session':null}],lessons:Record<string,any>[]=legacyZero?[{id:'historic',student:sid,day:'2026-10-30',fee:400,original_fee:0,fee_source:'signing_rate',voided:null,created:'2026-10-30'}]:[];
  await page.clock.install({time:new Date('2026-10-31T02:00:00Z')});
  await page.addInitScript(()=>{
   const payload=btoa(JSON.stringify({sub:'teacher',exp:2000000000,role:'authenticated'}));
@@ -13,7 +13,7 @@ async function setup(page:Page,makeup=false){
   if(url.pathname.endsWith('/rpc/account_action'))result={user_id:'teacher',is_admin:false,disabled:false};
   if(url.pathname.endsWith('/teacher_access'))result={user_id:'teacher'};
   if(url.pathname.endsWith('/students'))result=[{id:sid,name:'測試學生',fee:1200,active:1,created:'2026-10-01'}];
-  if(url.pathname.endsWith('/lessons'))result=lessons;
+  if(url.pathname.endsWith('/lesson_records'))result=lessons;
   if(url.pathname.endsWith('/rpc/studio_action')){
    const b=route.request().postDataJSON().b;calls.push(b);
    if(b.action==='calendar')result={sessions:sessions.filter(c=>c.day>=b.from&&c.day<=b.to),slots:[],pending:sessions.filter(c=>c.status==='leave'&&c.needs_makeup),makeups:makeup?sessions.filter(c=>c.status==='planned'):[],origins:makeup?[{...initial,id:'original-session',day:'2026-10-17',status:'leave',needs_makeup:true}]:[],events:[]};
@@ -121,4 +121,13 @@ test('one-off signing selects a student and time, clears signatures after edits 
  await ink(page,'老師簽名');await ink(page,'學生／家長簽名');await submit.click();
  await expect.poll(()=>calls.find(c=>c.action==='oneoff_lesson')).toMatchObject({student:sid,day:'2026-10-30',minute:930,duration:60});
  expect(calls.find(c=>c.action==='oneoff_lesson')).not.toHaveProperty('actualFee');
+});
+
+test('legacy zero schedule signs at current fee and folder preserves historical resolved fee',async({page})=>{
+ const calls=await setup(page,false,true);await page.getByRole('button',{name:/09:00–10:00/}).click();await page.getByRole('button',{name:'開啟師生簽到'}).click();
+ await ink(page,'老師簽名');await ink(page,'學生／家長簽名');await page.getByRole('button',{name:'確認雙方簽署並儲存'}).click();
+ await expect.poll(()=>calls.find(c=>c.action==='lesson')).toMatchObject({actualFee:1200,session:cid});
+ await page.getByRole('button',{name:'學生資料夾',exact:false}).click();await page.getByRole('button',{name:/測試學生.*堂/}).click();
+ const history=page.getByRole('button').filter({hasText:'2026-10-30'});await expect(history).toContainText('$400');await expect(history).toContainText('原紀錄 $0');
+ await expect(page.getByRole('button').filter({hasText:'2026-10-31'}).last()).toContainText('$1,200');
 });
