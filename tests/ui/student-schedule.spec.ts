@@ -53,7 +53,7 @@ test('student notes save multiline text and remain visible after reopening the f
 test('student list and selected details scroll independently on a tablet',async({page})=>{
  await page.setViewportSize({width:1024,height:768});await setup(page);
  await page.route('https://classsign-test.invalid/rest/v1/students**',route=>route.fulfill({contentType:'application/json',body:JSON.stringify(Array.from({length:40},(_,i)=>({id:i===0?sid:`student-${i}`,name:i===0?'測試學生':`其他學生${String(i).padStart(2,'0')}`,fee:800,active:1,notes:'',created:'2026-10-01'})))}));
- await page.route('https://classsign-test.invalid/rest/v1/lessons**',route=>route.fulfill({contentType:'application/json',body:JSON.stringify(Array.from({length:60},(_,i)=>({id:`lesson-${i}`,student:sid,day:'2026-10-01',fee:800,voided:null,created:'2026-10-01'})))}));
+ await page.route('https://classsign-test.invalid/rest/v1/lesson_records**',route=>route.fulfill({contentType:'application/json',body:JSON.stringify(Array.from({length:60},(_,i)=>({id:`lesson-${i}`,student:sid,day:'2026-10-01',fee:800,voided:null,created:'2026-10-01'})))}));
  await page.reload();await folder(page);
  const workspace=page.locator('.workspace'),left=page.locator('.student-list'),right=page.locator('.workspace>.records');
  await workspace.evaluate(el=>el.scrollIntoView({block:'start'}));
