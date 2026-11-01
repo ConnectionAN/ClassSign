@@ -18,7 +18,7 @@ for(const width of [390,1024])test('void moves a draft out of active bags while 
  const article=page.locator('.invoice-print');await expect(article).toContainText('月份有誤，重新建立');await expect(article).toContainText('11 月預定課程 4 堂');await expect(article).toContainText('已作廢');
  await expect(article.getByRole('button',{name:'確認收款',exact:true})).toHaveCount(0);await expect(article.getByRole('button',{name:'確認金額並正式開立',exact:true})).toHaveCount(0);
  await page.emulateMedia({media:'print'});await expect(article.getByText('作廢原因：月份有誤，重新建立')).toBeVisible();await expect(folders).toBeHidden();await page.emulateMedia({media:'screen'});
- await page.getByLabel('搜尋學生').fill('不存在');await expect(list.locator('button')).toHaveCount(0);await expect(page.getByRole('status')).toContainText('沒有作廢紀錄');await page.getByLabel('搜尋學生').fill('');
+ await page.getByLabel('搜尋學生').fill('不存在');await expect(list.locator('button')).toHaveCount(0);await expect(page.getByRole('status',{name:'學費袋搜尋結果'})).toContainText('沒有作廢紀錄');await page.getByLabel('搜尋學生').fill('');
  // A new draft for the same student/month must return to the active folder.
  await page.getByRole('button',{name:'產生／重算草稿',exact:true}).click();await expect(active).toHaveAttribute('aria-pressed','true');await expect(article).toContainText('陳以安');await expect(article).toContainText('草稿');
  await active.click();await expect(list.locator('button')).toHaveCount(4);await expect(list).not.toContainText('已作廢');
