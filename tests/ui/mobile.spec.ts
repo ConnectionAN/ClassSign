@@ -1,0 +1,28 @@
+import {test,expect} from '@playwright/test';
+const sid='11111111-1111-4111-8111-111111111111';
+for(const width of [320,375,390,430])test('mobile touch workflow '+width,async({browser})=>{
+ const context=await browser.newContext({viewport:{width,height:844},hasTouch:true,isMobile:true});const page=await context.newPage();const calls:any[]=[];
+ await page.clock.install({time:new Date('2026-10-31T02:00:00Z')});
+ await page.addInitScript(()=>{const payload=btoa(JSON.stringify({sub:'teacher',exp:2000000000,role:'authenticated'}));localStorage.setItem('sb-classsign-test-auth-token',JSON.stringify({access_token:'eyJhbGciOiJIUzI1NiJ9.'+payload+'.test',refresh_token:'test',expires_at:2000000000,token_type:'bearer',user:{id:'teacher',email:'test@example.invalid',app_metadata:{},user_metadata:{},aud:'authenticated'}}))});
+ await page.route('https://classsign-test.invalid/**',async route=>{const path=new URL(route.request().url()).pathname;let result:any=[];
+ if(path.endsWith('/teacher_access'))result={user_id:'teacher'};
+ if(path.endsWith('/rpc/account_action'))result={user_id:'teacher',is_admin:false,disabled:false,accounts:[]};
+ if(path.endsWith('/students'))result=[{id:sid,name:'測試學生',fee:800,active:1,created:'2026-10-01'}];
+ if(path.endsWith('/rpc/studio_action')){const b=route.request().postDataJSON().b;calls.push(b);result=b.action==='calendar'?{sessions:[{id:'session',student:sid,day:'2026-10-31',original_day:'2026-10-31',minute:540,duration:60,status:'planned',estimated_fee:800}],slots:[],pending:[],makeups:[],origins:[],events:[]}:{slots:[],next:null};}
+ if(path.endsWith('/rpc/billing_action'))result={invoices:[{id:'invoice',student:sid,student_name:'測試學生',month:'2026-10-01',state:'issued',total:3200,paid:2000}],items:[],materials:[],payments:[],adjustments:[],pending:[],audit:[],exclusions:[]};
+ if(path.endsWith('/rpc/report_snapshot'))result={generated_at:'2026-10-31T02:00:00Z',students:[{id:sid,name:'測試學生',active:1}],invoices:[{id:'invoice',student:sid,student_name:'測試學生',month:'2026-10-01',state:'issued',total:3200,paid:2000}],items:[],payments:[{id:'payment',invoice:'invoice',day:'2026-10-03',amount:2000,method:'cash',reverses:null}],materials:[],adjustments:[],lessons:[],sessions:[],pending:[]};
+ await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(result)});});
+
+ await page.goto('/');const nav=page.getByRole('navigation',{name:'手機主要導覽'});await expect(nav).toBeVisible();await expect(page.locator('.calendar.day')).toBeVisible();
+ await page.getByRole('button',{name:'下一日',exact:true}).tap();await expect(page.getByLabel('選擇日期')).toHaveValue('2026-11-01');await page.getByRole('button',{name:'今天',exact:true}).tap();
+ await page.getByRole('button',{name:/09:00–10:00/}).tap();await page.getByRole('button',{name:'開啟師生簽到'}).tap();
+ const save=page.getByRole('button',{name:'確認雙方簽署並儲存'});await expect(save).toBeDisabled();
+ async function ink(label:string){const canvas=page.getByLabel(label+'手寫區');await canvas.scrollIntoViewIfNeeded();await canvas.tap({position:{x:30,y:50}});const box=(await canvas.boundingBox())!;await page.mouse.move(box.x+30,box.y+50);await page.mouse.down();await page.mouse.move(box.x+130,box.y+80,{steps:8});await page.mouse.up();}
+ await ink('老師簽名');await page.getByRole('button',{name:'下一步：學生／家長簽名'}).tap();await ink('學生／家長簽名');await page.screenshot({path:'../../outputs/mobile/'+width+'-signature.png',fullPage:true});await expect(save).toBeEnabled();await save.tap();await expect.poll(()=>calls.some(b=>b.action==='lesson'&&b.teacher.startsWith('data:image/png')&&b.learner.startsWith('data:image/png'))).toBe(true);
+ await nav.getByRole('button',{name:'學生',exact:true}).tap();await page.getByLabel('搜尋學生',{exact:true}).fill('測試');await page.getByRole('button',{name:/測試學生.*堂/}).tap();await page.getByRole('button',{name:'備註',exact:true}).tap();await page.getByRole('textbox',{name:'學生備註'}).fill('旋轉保留未儲存備註');await page.setViewportSize({width:844,height:width});await page.setViewportSize({width,height:844});await expect(page.getByRole('textbox',{name:'學生備註'})).toHaveValue('旋轉保留未儲存備註');await page.getByRole('button',{name:'教材購入記錄',exact:true}).tap();await page.getByText('＋ 登記購入教材',{exact:true}).tap();await page.getByLabel('教材名稱').fill('手機教本');await page.getByLabel('單價（TWD）').fill('350');await page.getByRole('button',{name:'儲存教材',exact:true}).tap();
+ await nav.getByRole('button',{name:'收費',exact:true}).tap();await page.getByRole('button',{name:/測試學生.*部分收款/}).tap();await expect(page.getByRole('article')).toContainText('1,200');await page.getByLabel('金額',{exact:true}).fill('1200');await page.getByRole('button',{name:'確認收款',exact:true}).tap();
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);await page.screenshot({path:'../../outputs/mobile/'+width+'-billing.png',fullPage:true});
+ await nav.getByRole('button',{name:'更多',exact:true}).tap();await expect(page.getByRole('button',{name:'統計報表 ›'})).toBeVisible();await page.getByRole('button',{name:'統計報表 ›'}).tap();await expect(page.getByRole('heading',{name:'營運總覽',exact:true})).toBeVisible();await page.getByText('查看報表詳情（',{exact:false}).tap();await expect(page.locator('.mobile-report-card').first()).toBeVisible();await page.screenshot({path:'../../outputs/mobile/'+width+'-reports.png',fullPage:true});await nav.getByRole('button',{name:'更多',exact:true}).tap();await page.getByRole('button',{name:'帳號管理 ›'}).tap();
+ await page.setViewportSize({width:844,height:width});await expect(nav).toBeHidden();await page.setViewportSize({width,height:844});await expect(nav).toBeVisible();expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+ await context.close();
+});

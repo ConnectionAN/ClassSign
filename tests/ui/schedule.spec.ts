@@ -25,7 +25,7 @@ async function setup(page:Page,makeup=false){
   }
   await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(result)});
  });
- await page.goto('/');await page.getByRole('button',{name:'日／週課表'}).click();
+ await page.goto('/');if(page.viewportSize()!.width<768)await page.getByRole('navigation',{name:'手機主要導覽'}).getByRole('button',{name:'課表',exact:true}).click();else await page.getByRole('button',{name:'日／週課表'}).click();
  await expect(page.getByRole('button',{name:/09:00–10:00/}).first()).toBeVisible();return calls;
 }
 async function ink(page:Page,label:string){

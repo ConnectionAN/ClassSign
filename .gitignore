@@ -6,3 +6,6 @@ dist/
 .env*
 !.env.example
 
+
+# Local visual baselines contain screenshots; keep them outside published source.
+tests/ui/mobile-baseline.spec.ts-snapshots/
