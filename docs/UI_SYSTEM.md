@@ -56,3 +56,20 @@
 3. 先使用既有 token 與 variant；新增狀態須在本文件、元件及截圖案例同步登記。
 4. 依 UI_ACCEPTANCE.md 跑功能、尺寸、白字與素材雜湊驗證。
 5. 提供預覽與逐頁差異，使用者確認後才能正式發布。
+
+
+## 網頁與 PWA 圖示
+
+所有圖示從完整原始頭貼等比縮製，沒有重畫、改色或裁掉中文字標。原始 JPEG 保持不變。來源是含 Japan Color 2001 Coated ICC 的 CMYK JPEG，匯出 RGB 圖示時依原 ICC 轉成 sRGB，維持與原圖在瀏覽器中的顯色一致，避免直接丟棄色彩描述檔造成偏紫。
+
+| 項目 | 檔案 |
+| --- | --- |
+| 瀏覽器分頁／附圖的小圖示 | /favicon.ico（16／32／48）、/icons/classsign-brand-32.png |
+| 原 icon.svg 相容路徑 | /icon.svg，內嵌同一份 192px 原圖衍生 PNG，不依賴外部 SVG 載圖 |
+| iPhone／iPad 加到主畫面 | /icons/classsign-brand-180.png，apple-touch-icon |
+| PWA 一般圖示 | /icons/classsign-brand-192.png、classsign-brand-512.png |
+| Android 可遮罩圖示 | /icons/classsign-brand-maskable-512.png，原圖完整縮至 384px，周圍各 64px 同原背景色留白 |
+
+manifest 指定 192／512 PNG 與獨立 maskable PNG；不再以綠底音符當正式圖示。更新後瀏覽器分頁及已安裝 PWA 可能需重新載入或等待平台更新圖示快取，不能僅憑網站部署宣稱每台已安裝裝置已更新。
+
+需要重製時，以 Python + Pillow 執行 `python scripts/generate-brand-icons.py`。產物納入儲存庫，正常前端建置不需要 Python。不得改用繪製音符、字型或 AI 提案替代原圖。
